@@ -11,12 +11,15 @@ import { Hero } from '@/components/home/Hero';
 import { MarketMoodIndexCompact } from '@/components/market/MarketMoodIndexCompact';
 import { FiiDiiActivityCompact } from '@/components/market/FiiDiiActivityCompact';
 
+import CinematicIntro from '@/components/CinematicIntro';
+
 export default async function HomePage() {
   // Fetch more articles for a dense feed
   const { articles: newsArticles } = await fetchFinanceNews(1, 15, 'finance'); // Broad finance search
 
   return (
     <div className="min-h-screen bg-[#0f1218] pb-12">
+      <CinematicIntro />
       <Hero />
 
       <main className="max-w-7xl mx-auto px-4 py-2">
