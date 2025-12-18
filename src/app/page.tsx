@@ -11,12 +11,15 @@ import { Hero } from '@/components/home/Hero';
 import { MarketMoodIndexCompact } from '@/components/market/MarketMoodIndexCompact';
 import { FiiDiiActivityCompact } from '@/components/market/FiiDiiActivityCompact';
 
+import { Suspense } from 'react';
 import CinematicIntro from '@/components/CinematicIntro';
 
-export default async function HomePage() {
-  // Fetch more articles for a dense feed
-  const { articles: newsArticles } = await fetchFinanceNews(1, 15, 'finance'); // Broad finance search
+async function NewsFeedSection() {
+  const { articles: newsArticles } = await fetchFinanceNews(1, 15, 'finance');
+  return <NewsFeedList news={newsArticles as any[]} />;
+}
 
+export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#0f1218] pb-12">
       <CinematicIntro />
@@ -49,7 +52,9 @@ export default async function HomePage() {
               <h2 className="text-2xl font-bold text-white">Latest Market Intelligence</h2>
             </div>
 
-            <NewsFeedList news={newsArticles as any[]} />
+            <Suspense fallback={<div className="text-white/20">Loading news...</div>}>
+              <NewsFeedSection />
+            </Suspense>
           </div>
         </div>
       </main>

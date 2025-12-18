@@ -264,12 +264,13 @@ const CinematicIntro: React.FC = () => {
     const [isDismissed, setIsDismissed] = useState(true);
 
     useEffect(() => {
-        const hasPlayed = sessionStorage.getItem("intro_played");
         const isMobile = window.innerWidth < 768;
 
-        if (!hasPlayed && !isMobile) {
+        if (!isMobile) {
             setIsVisible(true);
             setIsDismissed(false);
+            // Lock scroll
+            document.body.style.overflow = 'hidden';
         }
     }, []);
 
@@ -280,7 +281,8 @@ const CinematicIntro: React.FC = () => {
             ease: "power2.inOut",
             onComplete: () => {
                 setIsDismissed(true);
-                sessionStorage.setItem("intro_played", "true");
+                // Unlock scroll
+                document.body.style.overflow = 'auto';
             }
         });
     };
