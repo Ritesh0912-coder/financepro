@@ -7,11 +7,11 @@ import { TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
 
 // Mock Data (in Crores)
 const ACTIVITY_DATA = [
+    { date: '22 Dec', fii: -457.34, dii: 4058.22 },
     { date: '15 Dec', fii: 1250.45, dii: -450.20 },
     { date: '14 Dec', fii: -890.10, dii: 1200.50 },
     { date: '13 Dec', fii: 560.30, dii: 300.10 },
     { date: '12 Dec', fii: -2100.00, dii: 1800.75 },
-    { date: '11 Dec', fii: 450.00, dii: 120.00 },
 ];
 
 export function FiiDiiActivityCompact() {

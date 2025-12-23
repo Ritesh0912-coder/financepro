@@ -17,20 +17,20 @@ export default function LoginPage() {
         e.preventDefault();
         setLoading(true);
         // Attempt to sign in with credentials (email & password)
-        await signIn("credentials", { email, password, callbackUrl: "/" });
+        await signIn("credentials", { email, password, callbackUrl: "/user/profile" });
         setLoading(false);
     };
 
     const handleEmailLogin = async (e: React.SyntheticEvent) => {
         e.preventDefault();
         setLoading(true);
-        await signIn("email", { email, callbackUrl: "/" });
+        await signIn("email", { email, callbackUrl: "/user/profile" });
         setLoading(false);
     };
 
     const handleGoogleLogin = async () => {
         setLoading(true);
-        await signIn("google", { callbackUrl: "/" });
+        await signIn("google", { callbackUrl: "/user/profile" });
     };
 
     return (

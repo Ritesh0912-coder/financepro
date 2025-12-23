@@ -5,13 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { HelpCircle, TrendingUp, TrendingDown, Info } from 'lucide-react';
 
 const ACTIVITY_DATA = [
+    { date: '22 Dec', fii: -457.34, dii: 4058.22 },
     { date: '15 Dec', fii: 1250.45, dii: -450.20 },
     { date: '14 Dec', fii: -890.10, dii: 1200.50 },
     { date: '13 Dec', fii: 560.30, dii: 300.10 },
     { date: '12 Dec', fii: -2100.00, dii: 1800.75 },
     { date: '11 Dec', fii: 450.00, dii: 120.00 },
     { date: '10 Dec', fii: -320.50, dii: 890.25 },
-    { date: '09 Dec', fii: 1780.90, dii: -230.40 },
 ];
 
 export default function FiiDiiPage() {
@@ -88,17 +88,22 @@ export default function FiiDiiPage() {
                 </Card>
 
                 {/* Market Impact Analysis */}
-                <Card className="bg-[#1a1f2e] border-slate-700/50">
+                <Card className="bg-[#1a1f2e] border-indigo-500/30 border-2 shadow-[0_0_15px_rgba(99,102,241,0.1)]">
                     <CardHeader>
-                        <CardTitle className="text-lg font-bold text-white">Market Impact Analysis</CardTitle>
+                        <CardTitle className="text-xl font-bold text-indigo-400 flex items-center gap-2">
+                            <TrendingUp className="h-6 w-6" />
+                            Strategic Impact of Institutional Activity
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-4 mb-4">
-                            <p className="text-sm text-indigo-300 leading-relaxed">
-                                <strong>Current Trend:</strong> {totalFii >= 0 ? 'FIIs are net buyers' : 'FIIs are net sellers'},
-                                while {totalDii >= 0 ? 'DIIs are providing support with net buying' : 'DIIs are also selling'}.
-                                {totalFii < 0 && totalDii > 0 && ' DIIs are cushioning FII outflows, providing market stability.'}
-                                {totalFii > 0 && totalDii < 0 && ' FII inflows are offsetting DII selling pressure.'}
+                        <div className="bg-slate-900/50 border border-slate-800 rounded-lg p-5 space-y-4">
+                            <p className="text-slate-300 leading-relaxed">
+                                <strong className="text-white text-lg block mb-2">Buy on DII Strength?</strong>
+                                Currently, <strong>DIIs are aggressively supporting the market</strong> with a net buy of ₹4,058 Cr, completely absorbing the selling pressure from FIIs (₹457 Cr). This divergence suggests that domestic liquidity is exceptionally strong.
+                            </p>
+                            <div className="h-px bg-slate-800 w-full" />
+                            <p className="text-sm text-indigo-300 leading-relaxed italic">
+                                <strong>Key Strategy:</strong> When FII selling is low and DII buying is high, it indicates a "bottoming out" sentiment amongst domestic funds. Investors can look for entry points in large-cap stocks where DIIs are increasing their stakes.
                             </p>
                         </div>
                     </CardContent>

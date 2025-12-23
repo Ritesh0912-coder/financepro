@@ -1,17 +1,53 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, FileText, Settings, Activity } from 'lucide-react';
+import { Users, FileText, Settings, Activity, LogOut } from 'lucide-react';
+import { signOut } from 'next-auth/react';
+import { getAdminStats } from '@/actions/admin';
+import Link from 'next/link';
 
 export default function AdminDashboard() {
+    const [stats, setStats] = useState({
+        totalUsers: 0,
+        totalArticles: 0,
+        systemHealth: 100,
+    });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchStats() {
+            try {
+                const res = await getAdminStats();
+                if (res.success && res.data) {
+                    setStats(res.data);
+                }
+            } catch (error) {
+                console.error("Failed to load stats", error);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchStats();
+    }, []);
+
     return (
         <div className="min-h-screen bg-[#0f1218] pt-32 pb-20 px-4">
             <div className="max-w-7xl mx-auto space-y-8">
-                <div>
-                    <h1 className="text-3xl font-bold text-white mb-2">Admin Dashboard</h1>
-                    <p className="text-slate-400">Manage your platform content and settings.</p>
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold text-white mb-2">Admin Dashboard</h1>
+                        <p className="text-slate-400">Manage your platform content and settings.</p>
+                    </div>
+                    <Button
+                        variant="destructive"
+                        onClick={() => signOut({ callbackUrl: '/' })}
+                        className="bg-red-600 hover:bg-red-700 gap-2"
+                    >
+                        <LogOut className="w-4 h-4" />
+                        Sign Out
+                    </Button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -21,8 +57,10 @@ export default function AdminDashboard() {
                             <Users className="h-4 w-4 text-indigo-400" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-white">1,234</div>
-                            <p className="text-xs text-slate-500 mt-1">+12% from last month</p>
+                            <div className="text-2xl font-bold text-white">
+                                {loading ? '...' : stats.totalUsers}
+                            </div>
+                            <p className="text-xs text-slate-500 mt-1">Registered Accounts</p>
                         </CardContent>
                     </Card>
 
@@ -32,8 +70,10 @@ export default function AdminDashboard() {
                             <FileText className="h-4 w-4 text-green-400" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-white">456</div>
-                            <p className="text-xs text-slate-500 mt-1">+23 new this week</p>
+                            <div className="text-2xl font-bold text-white">
+                                {loading ? '...' : stats.totalArticles}
+                            </div>
+                            <p className="text-xs text-slate-500 mt-1">Published News</p>
                         </CardContent>
                     </Card>
 
@@ -43,7 +83,7 @@ export default function AdminDashboard() {
                             <Activity className="h-4 w-4 text-orange-400" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-white">98.9%</div>
+                            <div className="text-2xl font-bold text-white">{stats.systemHealth}%</div>
                             <p className="text-xs text-slate-500 mt-1">Operational</p>
                         </CardContent>
                     </Card>
@@ -63,31 +103,18 @@ export default function AdminDashboard() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div className="bg-[#1a1f2e] border border-slate-700/50 rounded-xl p-6">
-                        <h3 className="text-lg font-bold text-white mb-4">Recent Activity</h3>
-                        <div className="space-y-4">
-                            {[1, 2, 3].map((i) => (
-                                <div key={i} className="flex items-center gap-4 border-b border-slate-800/50 pb-4 last:border-0 last:pb-0">
-                                    <div className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center">
-                                        <span className="text-xs font-bold text-slate-400">U{i}</span>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-white">User {i} updated profile settings</p>
-                                        <p className="text-xs text-slate-500">2 hours ago</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="bg-[#1a1f2e] border border-slate-700/50 rounded-xl p-6">
                         <h3 className="text-lg font-bold text-white mb-4">Quick Actions</h3>
                         <div className="grid grid-cols-2 gap-4">
-                            <Button variant="outline" className="border-slate-700 hover:bg-slate-800 text-slate-300 h-20 flex flex-col gap-2">
-                                <FileText className="h-5 w-5" /> Write Article
-                            </Button>
-                            <Button variant="outline" className="border-slate-700 hover:bg-slate-800 text-slate-300 h-20 flex flex-col gap-2">
-                                <Users className="h-5 w-5" /> Manage Users
-                            </Button>
+                            <Link href="/admin/news">
+                                <Button variant="outline" className="w-full border-slate-700 hover:bg-slate-800 text-slate-300 h-20 flex flex-col gap-2">
+                                    <FileText className="h-5 w-5" /> Write Article
+                                </Button>
+                            </Link>
+                            <Link href="/admin/users">
+                                <Button variant="outline" className="w-full border-slate-700 hover:bg-slate-800 text-slate-300 h-20 flex flex-col gap-2">
+                                    <Users className="h-5 w-5" /> Manage Users
+                                </Button>
+                            </Link>
                         </div>
                     </div>
                 </div>

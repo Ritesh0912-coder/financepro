@@ -54,6 +54,9 @@ export default function NewsFeedList({ news }: { news: NewsItem[] }) {
                                     src={item.imageUrl}
                                     alt={item.title}
                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                    onError={(e) => {
+                                        e.currentTarget.src = 'https://images.unsplash.com/photo-1611974765270-ca1258634369?q=80&w=800&auto=format&fit=crop';
+                                    }}
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-[#1a1f2e] to-transparent opacity-60" />
                             </Link>

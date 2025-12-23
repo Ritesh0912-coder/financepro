@@ -54,6 +54,9 @@ export function NewsCard({
                                 src={imageUrl}
                                 alt={title}
                                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                onError={(e) => {
+                                    e.currentTarget.src = 'https://images.unsplash.com/photo-1611974765270-ca1258634369?q=80&w=800&auto=format&fit=crop';
+                                }}
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent" />
                             {isBreaking && (

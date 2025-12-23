@@ -7,8 +7,8 @@ import { ArrowRight } from 'lucide-react';
 
 // Mock Data
 const MMI_DATA = {
-    value: 72.5,
-    status: 'Greed',
+    value: 45.92,
+    status: 'Fear',
 };
 
 export function MarketMoodIndexCompact() {

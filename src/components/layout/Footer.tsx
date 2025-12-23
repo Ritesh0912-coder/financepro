@@ -9,20 +9,23 @@ const footerLinks = {
         // Removed Commodities/Crypto
     ],
     news: [
-        { label: 'All News', href: '/news' },
+
         { label: 'Breaking', href: '/news?category=breaking' },
         { label: 'Stocks', href: '/news?category=stocks' },
-        { label: 'Economy', href: '/news?category=economy' },
+
     ],
     tools: [
         { label: 'LTP Calculator', href: '/ltp-calculator' },
         // Removed Global Tracker/Alerts
     ],
+    legal: [
+        { label: 'Privacy Policy', href: '/privacy' },
+        { label: 'Terms of Service', href: '/terms' },
+        { label: 'Cookie Policy', href: '/cookies' },
+    ],
     company: [
         { label: 'About', href: '/about' },
         { label: 'Contact', href: '/contact' },
-        { label: 'Privacy Policy', href: '/privacy' },
-        { label: 'Terms of Service', href: '/terms' },
     ],
 };
 
@@ -126,9 +129,9 @@ export function Footer() {
                         © {new Date().getFullYear()} Global Finance IN. All rights reserved.
                     </p>
                     <div className="flex gap-6 text-sm text-slate-500">
-                        <Link href="#" className="hover:text-orange-400 transition-colors">Privacy</Link>
-                        <Link href="#" className="hover:text-orange-400 transition-colors">Terms</Link>
-                        <Link href="#" className="hover:text-orange-400 transition-colors">Cookies</Link>
+                        <Link href="/privacy" className="hover:text-orange-400 transition-colors">Privacy</Link>
+                        <Link href="/terms" className="hover:text-orange-400 transition-colors">Terms</Link>
+                        <Link href="/cookies" className="hover:text-orange-400 transition-colors">Cookies</Link>
                     </div>
                 </div>
             </div>

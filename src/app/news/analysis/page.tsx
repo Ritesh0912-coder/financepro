@@ -92,7 +92,14 @@ function AnalysisContent() {
 
                     {imageUrl && (
                         <div className="rounded-2xl overflow-hidden border border-slate-800 shadow-2xl relative aspect-video">
-                            <img src={imageUrl} alt={title} className="w-full h-full object-cover" />
+                            <img
+                                src={imageUrl}
+                                alt={title}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    e.currentTarget.src = 'https://images.unsplash.com/photo-1611974765270-ca1258634369?q=80&w=800&auto=format&fit=crop';
+                                }}
+                            />
                         </div>
                     )}
 

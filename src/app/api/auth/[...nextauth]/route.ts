@@ -6,6 +6,7 @@ import { MongoDBAdapter } from "@auth/mongodb-adapter"
 import clientPromise from "@/lib/mongodb"
 import dbConnect from "@/lib/db"
 import { User } from "@/models/User"
+import { sendVerificationRequest } from "@/lib/auth-send-request"
 
 export const authOptions: NextAuthOptions = {
     adapter: MongoDBAdapter(clientPromise),
@@ -23,7 +24,8 @@ export const authOptions: NextAuthOptions = {
                     pass: process.env.EMAIL_SERVER_PASSWORD
                 }
             },
-            from: process.env.EMAIL_FROM
+            from: process.env.EMAIL_FROM,
+            sendVerificationRequest,
         }),
         CredentialsProvider({
             name: "Credentials",
@@ -68,6 +70,12 @@ export const authOptions: NextAuthOptions = {
                 token.role = user.role;
                 token.id = user.id;
             }
+
+            // Enforce Admin Role for specific email
+            if (token.email === 'coder9184@gmail.com') {
+                token.role = 'admin';
+            }
+
             return token;
         },
         async session({ session, token }) {
@@ -81,6 +89,7 @@ export const authOptions: NextAuthOptions = {
     pages: {
         signIn: '/auth/login',
     },
+    debug: true, // Enable debugging to trace EmailSignin errors
     secret: process.env.NEXTAUTH_SECRET,
 }
 

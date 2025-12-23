@@ -19,7 +19,7 @@ export async function analyzeNewsWithGroq(text: string): Promise<{ summary: stri
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                model: "llama3-70b-8192", // Fast and capable model
+                model: "llama-3.3-70b-versatile", // Fast and capable model
                 messages: [
                     {
                         role: "system",

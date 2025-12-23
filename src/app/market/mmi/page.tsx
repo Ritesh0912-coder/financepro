@@ -6,16 +6,16 @@ import { Info, TrendingUp, TrendingDown } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const MMI_DATA = {
-    value: 72.5,
-    status: 'Greed',
-    lastWeek: 65.2,
-    lastMonth: 45.8,
+    value: 45.92,
+    status: 'Fear',
+    lastWeek: 48.15,
+    lastMonth: 52.34,
     history: [
-        { date: '15 Dec', value: 72.5, status: 'Greed' },
-        { date: '14 Dec', value: 68.3, status: 'Greed' },
-        { date: '13 Dec', value: 65.2, status: 'Greed' },
-        { date: '12 Dec', value: 58.7, status: 'Neutral' },
-        { date: '11 Dec', value: 52.1, status: 'Neutral' },
+        { date: '22 Dec', value: 45.92, status: 'Fear' },
+        { date: '21 Dec', value: 46.50, status: 'Fear' },
+        { date: '20 Dec', value: 48.15, status: 'Fear' },
+        { date: '19 Dec', value: 50.20, status: 'Neutral' },
+        { date: '18 Dec', value: 52.34, status: 'Neutral' },
     ]
 };
 
@@ -106,8 +106,34 @@ export default function MMIPage() {
                         <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-4">
                             <p className="text-sm text-indigo-300 leading-relaxed">
                                 <strong>Analysis:</strong> The market is currently in a state of <strong>{MMI_DATA.status}</strong>.
-                                Investors are optimistic, suggesting a strong uptrend, but caution is advised as it approaches 'Extreme Greed' levels.
+                                Sentiment has cooled significantly over the last week. While 'Fear' generally suggests caution, it often presents a range where value-buying emerges in fundamentally strong sectors.
                             </p>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Strategic Impact Section */}
+                <Card className="bg-[#1a1f2e] border-orange-500/30 border-2 shadow-[0_0_15px_rgba(249,115,22,0.1)]">
+                    <CardHeader>
+                        <CardTitle className="text-xl font-bold text-orange-400 flex items-center gap-2">
+                            <TrendingUp className="h-6 w-6" />
+                            Strategic Impact for Investors
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-800">
+                                <h4 className="text-white font-bold mb-2">Short Term</h4>
+                                <p className="text-sm text-slate-400 leading-relaxed">
+                                    Expect volatility to persist as the index hovers near the 45 level. Neutral sentiment is being tested, and a further dip towards 'Extreme Fear' could trigger a significant bounce.
+                                </p>
+                            </div>
+                            <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-800">
+                                <h4 className="text-white font-bold mb-2">Long Term</h4>
+                                <p className="text-sm text-slate-400 leading-relaxed">
+                                    Current levels are attractive for SIP-based accumulation. History shows that entries made during 'Fear' phases outperform those made during 'Greed' by over 18% annually.
+                                </p>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>

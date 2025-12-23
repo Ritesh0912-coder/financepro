@@ -12,7 +12,6 @@ import { MarketMoodIndexCompact } from '@/components/market/MarketMoodIndexCompa
 import { FiiDiiActivityCompact } from '@/components/market/FiiDiiActivityCompact';
 
 import { Suspense } from 'react';
-import CinematicIntro from '@/components/CinematicIntro';
 
 async function NewsFeedSection() {
   const { articles: newsArticles } = await fetchFinanceNews(1, 15, 'finance');
@@ -22,7 +21,6 @@ async function NewsFeedSection() {
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#0f1218] pb-12">
-      <CinematicIntro />
       <Hero />
 
       <main className="max-w-7xl mx-auto px-4 py-2">
