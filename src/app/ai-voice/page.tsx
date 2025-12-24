@@ -464,7 +464,7 @@ export default function AiVoicePage() {
                                     {transcript && (
                                         <p className="text-3xl font-light text-slate-200 tracking-wide leading-snug">"{transcript}"</p>
                                     )}
-                                    {aiResponse && state !== 'listening' && (
+                                    {aiResponse && (
                                         <div className="bg-[#1a1f2e]/50 border border-white/5 rounded-3xl p-6 backdrop-blur-sm max-h-[40vh] overflow-y-auto no-scrollbar shadow-2xl">
                                             <p className="text-lg text-slate-300 font-normal leading-relaxed text-left">
                                                 {aiResponse}
@@ -493,8 +493,8 @@ export default function AiVoicePage() {
                         <Button
                             size="icon"
                             className={`h-24 w-24 rounded-full shadow-2xl transition-all duration-500 transform hover:scale-105 border-4 ${state === 'listening'
-                                    ? 'bg-red-500 hover:bg-red-600 border-red-400/30 shadow-red-500/40 animate-pulse'
-                                    : 'bg-orange-500 hover:bg-orange-400 border-orange-400/30 shadow-orange-500/30 text-white'
+                                ? 'bg-red-500 hover:bg-red-600 border-red-400/30 shadow-red-500/40 animate-pulse'
+                                : 'bg-orange-500 hover:bg-orange-400 border-orange-400/30 shadow-orange-500/30 text-white'
                                 }`}
                             onClick={toggleListening}
                         >

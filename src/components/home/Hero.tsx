@@ -37,7 +37,7 @@ export function Hero() {
             {/* Hyperspeed Background */}
             <div className="absolute inset-0 z-0 h-full w-full">
                 <Hyperspeed
-                    effectOptions={hyperspeedPresets.five}
+                    effectOptions={hyperspeedPresets.five as any}
                 />
             </div>
 
