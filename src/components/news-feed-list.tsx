@@ -20,7 +20,13 @@ interface NewsItem {
 
 import { motion } from 'framer-motion';
 
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+
 export default function NewsFeedList({ news }: { news: NewsItem[] }) {
+    const { data: session } = useSession();
+    const router = useRouter();
+
     if (!news || news.length === 0) return <div className="text-center text-slate-500">No news available.</div>;
 
     // Helper for Impact Badge
@@ -32,6 +38,19 @@ export default function NewsFeedList({ news }: { news: NewsItem[] }) {
                 return <Badge className="bg-red-500/20 text-red-400 border-red-500/30 flex items-center gap-1"><TrendingDown className="h-3 w-3" /> Bearish</Badge>;
             default:
                 return <Badge className="bg-slate-500/20 text-slate-400 border-slate-500/30 flex items-center gap-1"><Minus className="h-3 w-3" /> Neutral</Badge>;
+        }
+    };
+
+    const handleAuthAction = (e: React.MouseEvent, url: string, target?: string) => {
+        e.preventDefault();
+        if (!session) {
+            router.push('/auth/login');
+        } else {
+            if (target === '_blank') {
+                window.open(url, '_blank');
+            } else {
+                router.push(url);
+            }
         }
     };
 
@@ -49,7 +68,11 @@ export default function NewsFeedList({ news }: { news: NewsItem[] }) {
                     <div className="h-full bg-[#1a1f2e] border border-slate-700/50 rounded-2xl overflow-hidden hover:border-orange-500/50 transition-colors flex flex-col hover:shadow-2xl hover:shadow-orange-500/10 group">
                         {/* Image Section - Link to Source */}
                         {item.imageUrl && (
-                            <Link href={item.sourceUrl || '#'} target="_blank" className="h-48 w-full relative shrink-0 overflow-hidden block">
+                            <Link
+                                href={item.sourceUrl || '#'}
+                                onClick={(e) => handleAuthAction(e, item.sourceUrl || '#', '_blank')}
+                                className="h-48 w-full relative shrink-0 overflow-hidden block"
+                            >
                                 <img
                                     src={item.imageUrl}
                                     alt={item.title}
@@ -81,7 +104,11 @@ export default function NewsFeedList({ news }: { news: NewsItem[] }) {
                             </div>
 
                             {/* Title - Link to Source */}
-                            <Link href={item.sourceUrl || '#'} target="_blank" className="block mb-3">
+                            <Link
+                                href={item.sourceUrl || '#'}
+                                onClick={(e) => handleAuthAction(e, item.sourceUrl || '#', '_blank')}
+                                className="block mb-3"
+                            >
                                 <h3 className="text-lg font-bold text-white line-clamp-2 group-hover:text-orange-400 transition-colors leading-snug">
                                     {item.title}
                                 </h3>
@@ -93,22 +120,15 @@ export default function NewsFeedList({ news }: { news: NewsItem[] }) {
 
                             <div className="mt-auto pt-4 border-t border-slate-800/50 flex items-center justify-between">
                                 {/* Analysis Button - Link to Internal Page */}
-                                <Link
-                                    href={{
-                                        pathname: '/news/analysis',
-                                        query: {
-                                            title: item.title,
-                                            description: item.summary || item.content || '',
-                                            source: item.source,
-                                            publishedAt: new Date(item.publishedAt).toISOString(),
-                                            url: item.sourceUrl,
-                                            imageUrl: item.imageUrl
-                                        }
+                                <div
+                                    onClick={(e) => {
+                                        const url = `/news/analysis?title=${encodeURIComponent(item.title)}&description=${encodeURIComponent(item.summary || item.content || '')}&source=${encodeURIComponent(item.source)}&publishedAt=${encodeURIComponent(new Date(item.publishedAt).toISOString())}&url=${encodeURIComponent(item.sourceUrl || '')}&imageUrl=${encodeURIComponent(item.imageUrl || '')}`;
+                                        handleAuthAction(e, url);
                                     }}
-                                    className="inline-flex items-center gap-2 text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors bg-indigo-500/10 hover:bg-indigo-500/20 px-3 py-2 rounded-lg border border-indigo-500/20"
+                                    className="cursor-pointer inline-flex items-center gap-2 text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors bg-indigo-500/10 hover:bg-indigo-500/20 px-3 py-2 rounded-lg border border-indigo-500/20"
                                 >
                                     <Zap className="h-3 w-3" /> AI Analysis
-                                </Link>
+                                </div>
                             </div>
                         </div>
                     </div>

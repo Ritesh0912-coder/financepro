@@ -8,8 +8,7 @@ import NewsFeedList from '@/components/news-feed-list';
 
 import { Hero } from '@/components/home/Hero';
 
-import { MarketMoodIndexCompact } from '@/components/market/MarketMoodIndexCompact';
-import { FiiDiiActivityCompact } from '@/components/market/FiiDiiActivityCompact';
+
 
 import { Suspense } from 'react';
 
@@ -26,20 +25,7 @@ export default function HomePage() {
       <main className="max-w-7xl mx-auto px-4 py-2">
         <div className="space-y-12">
 
-          {/* Market Insights Section */}
-          <section>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="h-10 w-10 rounded-full bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
-                <Zap className="h-5 w-5 text-indigo-400" />
-              </div>
-              <h2 className="text-2xl font-bold text-white">Market Insights</h2>
-            </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <MarketMoodIndexCompact />
-              <FiiDiiActivityCompact />
-            </div>
-          </section>
 
           {/* News Feed (Centered) */}
           <div className="space-y-8">

@@ -26,7 +26,7 @@ export default function RootLayout({
     { label: "Home", href: "/" },
     { label: "News", href: "/news" },
     { label: "LTP", href: "/ltp-calculator" },
-    { label: "AI", href: "/ai-voice" },
+    { label: "FGA", href: "/ai-voice" },
     { label: "About", href: "/about" },
     { label: "Admin", href: "/admin/dashboard" },
     { label: "Login", href: "/auth/login" },

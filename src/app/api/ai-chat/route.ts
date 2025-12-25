@@ -1,110 +1,134 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Groq } from 'groq-sdk';
 import { fetchFinanceNews } from '@/lib/news-api';
-import { fetchMarketMood, fetchMarketData } from '@/lib/market-api';
+import { fetchMarketData } from '@/lib/market-api';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth-options";
+import dbConnect from "@/lib/db";
+import { ChatMessage } from "@/models/ChatMessage";
 
-const groq = new Groq({
-    apiKey: process.env.GROQ_API_KEY || "dummy_key", // Prevent instantiation crash, check key later
-});
+// Case-insensitive check for user id in session
+const getUserId = (session: any) => {
+    return session?.user?.id || session?.user?._id || session?.sub;
+};
 
-// Fallback/Base Snapshot
-const baseIndices = [
-    { symbol: 'NIFTY 50', price: 19432.40, change: 0.75 },
-    { symbol: 'SENSEX', price: 64718.56, change: -0.13 },
-];
+// GET: Fetch Chat History
+export async function GET(req: NextRequest) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session) return NextResponse.json({ messages: [] });
 
+        await dbConnect();
+        const userId = getUserId(session);
+
+        if (!userId) return NextResponse.json({ messages: [] });
+
+        const history = await ChatMessage.find({ userId })
+            .sort({ createdAt: 1 })
+            .limit(50); // Fetch last 50 messages for context
+
+        return NextResponse.json({
+            messages: history.map(m => ({ role: m.role, content: m.content }))
+        });
+    } catch (error) {
+        console.error('Fetch History Error:', error);
+        return NextResponse.json({ messages: [] });
+    }
+}
+
+// POST: Process Message and Save
 export async function POST(req: NextRequest) {
     try {
-        if (!process.env.GROQ_API_KEY) {
-            console.error("Missing GROQ_API_KEY");
-            return NextResponse.json({ reply: "I'm currently offline (Missing API Key). Please configure the system." });
-            // Returning as a 'reply' so it shows up in chat instead of crashing
+        const apiKey = process.env.OPENROUTER_API_KEY || process.env.META_API_KEY || process.env.META_MODEL_API_KEY;
+
+        if (!apiKey) {
+            console.error("Missing AI API Key (OpenRouter or Meta)");
+            return NextResponse.json({
+                reply: "I'm currently offline (Missing API Key). Please ensure OPENROUTER_API_KEY or META_API_KEY is configured."
+            });
         }
 
+        const session = await getServerSession(authOptions);
         const body = await req.json();
         const { messages } = body;
+        const lastUserMessage = messages[messages.length - 1];
 
         // 1. Gather Context (Resiliently)
         let context = "Real-time Market Context:\n";
 
-        try {
-            // Fetch Mood
-            const mood = await fetchMarketMood();
-            context += `Market Sentiment: ${mood.status} (Score: ${mood.value}/100). Recent trend: ${mood.change}%\n`;
-        } catch (e) {
-            console.error("Failed to fetch market mood", e);
-            context += "Market Sentiment: Unavailable (Data Error)\n";
-        }
+        // Base Indices Snapshot
+        context += "Major Global Indices (Reference):\n";
+        context += "- NIFTY 50: 19432.40 (+0.75%)\n";
+        context += "- SENSEX: 64718.56 (-0.13%)\n";
 
         try {
-            // Fetch SPY as a global proxy
             const spyData = await fetchMarketData('SPY');
-            if (spyData) {
-                context += `S&P 500 (SPY): ${spyData['05. price']} (${spyData['10. change percent']})\n`;
-            }
-        } catch (e) {
-            console.error("Failed to fetch SPY data", e);
-        }
-
-        // Add base indices
-        context += "Other Key Indices (Reference):\n";
-        baseIndices.forEach(idx => {
-            context += `${idx.symbol}: ${idx.price} (${idx.change > 0 ? '+' : ''}${idx.change}%)\n`;
-        });
+            if (spyData) context += `- S&P 500 (SPY): ${spyData['05. price']} (${spyData['10. change percent']})\n`;
+        } catch (e) { }
 
         try {
-            // 2. Fetch News
             const newsData = await fetchFinanceNews(1, 4);
             if (newsData.articles.length > 0) {
-                context += "\nLatest Top Headlines:\n";
-                newsData.articles.forEach((art, i) => {
-                    context += `${i + 1}. ${art.title} (- ${art.source})\n`;
-                });
+                context += "\nLatest Global Market Headlines:\n";
+                newsData.articles.forEach((art, i) => context += `${i + 1}. ${art.title}\n`);
             }
-        } catch (e) {
-            console.error("Failed to fetch news", e);
-            context += "\nLatest Headlines: Unavailable at the moment.\n";
-        }
+        } catch (e) { }
 
         // 3. System Prompt
-        const systemPrompt = `You are an advanced AI Financial Voice Assistant for "Global Finance IN". 
-        Your goal is to provide spoken-word friendly summaries of market conditions.
+        const systemPrompt = `You are "FGA" (Finance Global Assistant), an elite AI Financial Intelligence expert for "Global Finance IN". 
         
-        Context:
+        Real-time Context Snapshot:
         ${context}
 
-        Guidelines:
-        - Be concise. Spoken output should be snappy, not exhaustive lists.
-        - If the user greets you, reply briefly and mention the current market mood.
-        - Use the context to answer "How is the market?".
-        - "Extreme Greed" means very bullish, "Fear" means bearish. Explain this simply.
-        - If asked about news, pick the top 1-2 most important headlines.
-        - You have broad general knowledge; use it to explain concepts (e.g., "What is a repo rate?").
-        - Style: Professional, sharp, like a top financial analyst.
+        Operational Guidelines:
+        - Personality: Sharp, professional, visionary, yet accessible. 
+        - Knowledge Scope: You have access to real-time global market trends. Use the provided context to anchor your answers.
+        - Conversation: Be snappy and insightful. Don't just list facts—explain *why* they matter.
+        - Branding: Always refer to yourself as "FGA".
+        - Style: Minimalist excellence. Quality over quantity.
         `;
 
-        // 4. Call Groq
-        const completion = await groq.chat.completions.create({
-            messages: [
-                { role: 'system', content: systemPrompt },
-                ...messages
-            ],
-            model: 'llama3-70b-8192',
-            temperature: 0.7,
-            max_tokens: 350,
+        // 4. Call OpenRouter
+        const aiResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                model: "meta-llama/llama-3.1-405b-instruct",
+                messages: [{ role: "system", content: systemPrompt }, ...messages],
+                temperature: 0.7,
+                max_tokens: 350,
+            })
         });
 
-        const reply = completion.choices[0]?.message?.content || "I didn't catch that. Could you repeat?";
+        if (!aiResponse.ok) throw new Error(`AI API error: ${aiResponse.status}`);
 
-        return NextResponse.json({
-            reply,
-        });
+        const data = await aiResponse.json();
+        const reply = data.choices[0]?.message?.content || "I didn't catch that.";
+
+        // 5. Save to MongoDB
+        if (session) {
+            try {
+                await dbConnect();
+                const userId = getUserId(session);
+                if (userId) {
+                    await ChatMessage.create([
+                        { userId, role: 'user', content: lastUserMessage.content },
+                        { userId, role: 'assistant', content: reply }
+                    ]);
+                }
+            } catch (dbErr) {
+                console.error("DB Save Error:", dbErr);
+            }
+        }
+
+        return NextResponse.json({ reply });
 
     } catch (error) {
         console.error('AI Chat Error:', error);
-        // Return a safe fallback reply so the UI doesn't hang
         return NextResponse.json({
-            reply: "I'm encountering some technical difficulties right now. Please try again later."
+            reply: "I'm encountering some technical difficulties. Please try again later."
         });
     }
 }

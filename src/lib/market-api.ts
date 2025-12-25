@@ -21,28 +21,4 @@ export async function fetchMarketData(symbol: string = 'SPY') {
     }
 }
 
-// Latest extracted data from recent trading session (Dec 22, 2025)
-const REAL_MARKET_DATA = {
-    mmi: {
-        value: 45.92,
-        status: 'Fear'
-    },
-    fiidii: {
-        fiiNet: -457.34,
-        diiNet: 4058.22,
-        date: '22 Dec 2025'
-    }
-};
 
-export async function fetchMarketMood() {
-    // Return extracted "Real" data
-    return {
-        value: REAL_MARKET_DATA.mmi.value,
-        status: REAL_MARKET_DATA.mmi.status,
-        change: -0.8 // Simulated change for context
-    };
-}
-
-export async function fetchFiiDiiData() {
-    return REAL_MARKET_DATA.fiidii;
-}

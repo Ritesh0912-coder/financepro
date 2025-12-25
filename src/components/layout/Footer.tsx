@@ -1,22 +1,21 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
 import { Globe, Github, Twitter, Linkedin } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 
 const footerLinks = {
     markets: [
-        { label: 'Stock Indices', href: '/markets' },
-        { label: 'Foreign Exchange', href: '/markets?type=forex' },
-        // Removed Commodities/Crypto
+        { label: 'Stock Indices', href: '/news?category=markets' },
+        { label: 'Foreign Exchange', href: '/news?category=forex' },
     ],
     news: [
-
         { label: 'Breaking', href: '/news?category=breaking' },
         { label: 'Stocks', href: '/news?category=stocks' },
-
     ],
     tools: [
         { label: 'LTP Calculator', href: '/ltp-calculator' },
-        // Removed Global Tracker/Alerts
     ],
     legal: [
         { label: 'Privacy Policy', href: '/privacy' },
@@ -30,6 +29,11 @@ const footerLinks = {
 };
 
 export function Footer() {
+    const pathname = usePathname();
+
+    // Hide footer on AI voice page for a cleaner minimalist look
+    if (pathname === '/ai-voice') return null;
+
     return (
         <footer className="border-t border-white/5 bg-[#0f1218] pt-20 pb-10">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -63,11 +67,8 @@ export function Footer() {
                         <h3 className="text-sm font-semibold text-white">Markets</h3>
                         <ul className="mt-4 space-y-2">
                             {footerLinks.markets.map((link) => (
-                                <li key={link.href}>
-                                    <Link
-                                        href={link.href}
-                                        className="text-sm text-slate-400 hover:text-orange-400 transition-colors"
-                                    >
+                                <li key={`${link.label}-${link.href}`}>
+                                    <Link href={link.href} className="text-sm text-slate-400 hover:text-orange-400 transition-colors">
                                         {link.label}
                                     </Link>
                                 </li>
@@ -79,11 +80,8 @@ export function Footer() {
                         <h3 className="text-sm font-semibold text-white">News</h3>
                         <ul className="mt-4 space-y-2">
                             {footerLinks.news.map((link) => (
-                                <li key={link.href}>
-                                    <Link
-                                        href={link.href}
-                                        className="text-sm text-slate-400 hover:text-orange-400 transition-colors"
-                                    >
+                                <li key={`${link.label}-${link.href}`}>
+                                    <Link href={link.href} className="text-sm text-slate-400 hover:text-orange-400 transition-colors">
                                         {link.label}
                                     </Link>
                                 </li>
@@ -95,11 +93,8 @@ export function Footer() {
                         <h3 className="text-sm font-semibold text-white">Tools</h3>
                         <ul className="mt-4 space-y-2">
                             {footerLinks.tools.map((link) => (
-                                <li key={link.href}>
-                                    <Link
-                                        href={link.href}
-                                        className="text-sm text-slate-400 hover:text-orange-400 transition-colors"
-                                    >
+                                <li key={`${link.label}-${link.href}`}>
+                                    <Link href={link.href} className="text-sm text-slate-400 hover:text-orange-400 transition-colors">
                                         {link.label}
                                     </Link>
                                 </li>
@@ -111,11 +106,8 @@ export function Footer() {
                         <h3 className="text-sm font-semibold text-white">Company</h3>
                         <ul className="mt-4 space-y-2">
                             {footerLinks.company.map((link) => (
-                                <li key={link.href}>
-                                    <Link
-                                        href={link.href}
-                                        className="text-sm text-slate-400 hover:text-orange-400 transition-colors"
-                                    >
+                                <li key={`${link.label}-${link.href}`}>
+                                    <Link href={link.href} className="text-sm text-slate-400 hover:text-orange-400 transition-colors">
                                         {link.label}
                                     </Link>
                                 </li>
@@ -126,7 +118,7 @@ export function Footer() {
 
                 <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                     <p className="text-sm text-slate-500">
-                        © {new Date().getFullYear()} Global Finance IN. All rights reserved.
+                        © {new Date().getFullYear()} Global Finance IN. All rights reserved. By Ritesh shinde
                     </p>
                     <div className="flex gap-6 text-sm text-slate-500">
                         <Link href="/privacy" className="hover:text-orange-400 transition-colors">Privacy</Link>

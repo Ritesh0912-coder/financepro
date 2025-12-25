@@ -2,7 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { motion } from 'framer-motion';
 import {
     BarChart3,
@@ -28,6 +29,19 @@ const navItems = [
 export function Navbar() {
     const pathname = usePathname();
     const [isOpen, setIsOpen] = React.useState(false);
+    const { data: session } = useSession();
+    const router = useRouter();
+
+    const handleNavClick = (e: React.MouseEvent, href: string) => {
+        e.preventDefault();
+        if (!session) {
+            setIsOpen(false);
+            router.push('/auth/login');
+        } else {
+            setIsOpen(false);
+            router.push(href);
+        }
+    };
 
     return (
         <nav className={cn(
@@ -37,7 +51,11 @@ export function Navbar() {
             <div className="px-4 sm:px-6 lg:px-8">
                 <div className="flex h-16 items-center justify-between">
                     {/* Logo */}
-                    <Link href="/" className="flex items-center space-x-2">
+                    <Link
+                        href="/"
+                        onClick={(e) => handleNavClick(e, '/')}
+                        className="flex items-center space-x-2"
+                    >
                         <div className="relative">
                             <div className="absolute inset-0 bg-orange-500 blur-lg opacity-50" />
                             <Globe className="relative h-8 w-8 text-orange-400" />
@@ -54,7 +72,10 @@ export function Navbar() {
 
                     {/* Admin Button */}
                     <div className="hidden md:flex items-center space-x-4">
-                        <Link href="/admin/login">
+                        <Link
+                            href="/admin/login"
+                            onClick={(e) => handleNavClick(e, '/admin/login')}
+                        >
                             <Button variant="outline" size="sm">
                                 Admin
                             </Button>
@@ -88,7 +109,7 @@ export function Navbar() {
                                 <Link
                                     key={item.href}
                                     href={item.href}
-                                    onClick={() => setIsOpen(false)}
+                                    onClick={(e) => handleNavClick(e, item.href)}
                                 >
                                     <div
                                         className={cn(
@@ -104,7 +125,10 @@ export function Navbar() {
                                 </Link>
                             );
                         })}
-                        <Link href="/admin/login" onClick={() => setIsOpen(false)}>
+                        <Link
+                            href="/admin/login"
+                            onClick={(e) => handleNavClick(e, '/admin/login')}
+                        >
                             <div className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800">
                                 Admin Panel
                             </div>

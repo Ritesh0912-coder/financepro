@@ -1,7 +1,8 @@
 'use client';
 
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,8 +10,23 @@ import { ArrowLeft, ExternalLink, Zap, TrendingUp, TrendingDown, Minus, Share2 }
 
 
 function AnalysisContent() {
+    const { status } = useSession();
     const searchParams = useSearchParams();
     const router = useRouter();
+
+    useEffect(() => {
+        if (status === 'unauthenticated') {
+            router.push('/auth/login');
+        }
+    }, [status, router]);
+
+    if (status === 'loading') {
+        return <div className="min-h-screen flex items-center justify-center text-slate-500">Checking authentication...</div>;
+    }
+
+    if (status === 'unauthenticated') {
+        return null; // Will redirect via effect
+    }
 
     const title = searchParams.get('title') || 'No Title';
     const description = searchParams.get('description') || '';

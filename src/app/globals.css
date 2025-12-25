@@ -31,6 +31,13 @@
   --border: #2d3748;
   --input: #1a1f2e;
   --ring: #f97316;
+  /* Cosmic/Nebula Theme - Custom Palette for MindSpark Redesign */
+  --cosmic-nebula: #090b11;
+  --cosmic-glow: rgba(0, 180, 216, 0.4);
+  --cosmic-accent: #00e5ff; /* Vivid Cyan */
+  --cosmic-purple: #7000ff; /* Deep Purple */
+  --cosmic-glass: rgba(255, 255, 255, 0.03);
+  --cosmic-border: rgba(255, 255, 255, 0.08);
 }
 
 @theme inline {
@@ -91,6 +98,20 @@ body {
   background: rgba(26, 31, 46, 0.8);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cosmic-glass {
+  background: var(--cosmic-glass);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--cosmic-border);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.cosmic-gradient-text {
+  background: linear-gradient(to right, #ffffff 0%, #a5b4fc 50%, #ffffff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% auto;
 }
 
 /* Animations */
