@@ -27,7 +27,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 
-import { getAllNews } from '@/actions/admin';
+import { getAllNews, syncNews } from '@/actions/admin';
 
 // Mock news data removed - using backend data now
 
