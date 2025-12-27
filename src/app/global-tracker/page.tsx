@@ -3,36 +3,9 @@ import { Globe, TrendingUp, TrendingDown, AlertTriangle, Info, MapPin } from 'lu
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { getGlobalIndicators } from '@/actions/admin';
 
-// Mock global economic data
-const inflationData = [
-    { country: 'United States', code: '🇺🇸', value: 3.4, previous: 3.7, change: -0.3, status: 'normal' },
-    { country: 'India', code: '🇮🇳', value: 5.5, previous: 5.0, change: 0.5, status: 'warning' },
-    { country: 'United Kingdom', code: '🇬🇧', value: 4.0, previous: 4.6, change: -0.6, status: 'normal' },
-    { country: 'Euro Zone', code: '🇪🇺', value: 2.9, previous: 2.4, change: 0.5, status: 'normal' },
-    { country: 'Japan', code: '🇯🇵', value: 2.8, previous: 2.6, change: 0.2, status: 'normal' },
-    { country: 'China', code: '🇨🇳', value: 0.2, previous: -0.2, change: 0.4, status: 'normal' },
-    { country: 'Brazil', code: '🇧🇷', value: 4.5, previous: 4.8, change: -0.3, status: 'warning' },
-    { country: 'Germany', code: '🇩🇪', value: 3.2, previous: 2.9, change: 0.3, status: 'normal' },
-];
-
-const gdpData = [
-    { country: 'United States', code: '🇺🇸', value: 2.4, forecast: 2.1, status: 'growing' },
-    { country: 'India', code: '🇮🇳', value: 7.6, forecast: 6.5, status: 'growing' },
-    { country: 'China', code: '🇨🇳', value: 5.2, forecast: 4.5, status: 'slowing' },
-    { country: 'United Kingdom', code: '🇬🇧', value: 0.1, forecast: 0.5, status: 'stagnant' },
-    { country: 'Germany', code: '🇩🇪', value: -0.1, forecast: 0.3, status: 'recession' },
-    { country: 'Japan', code: '🇯🇵', value: 1.9, forecast: 1.0, status: 'growing' },
-];
-
-const interestRates = [
-    { bank: 'Federal Reserve', code: '🇺🇸', rate: 5.50, lastChange: 'Hold', nextMeeting: 'Jan 31, 2024' },
-    { bank: 'ECB', code: '🇪🇺', rate: 4.50, lastChange: 'Hold', nextMeeting: 'Jan 25, 2024' },
-    { bank: 'RBI', code: '🇮🇳', rate: 6.50, lastChange: 'Hold', nextMeeting: 'Feb 8, 2024' },
-    { bank: 'Bank of England', code: '🇬🇧', rate: 5.25, lastChange: 'Hold', nextMeeting: 'Feb 1, 2024' },
-    { bank: 'Bank of Japan', code: '🇯🇵', rate: -0.10, lastChange: 'Hold', nextMeeting: 'Jan 23, 2024' },
-];
-
+// Static alerts for now - these could be moved to DB later if needed
 const globalAlerts = [
     { type: 'critical', title: 'Red Sea Shipping Crisis', region: 'Middle East', description: 'Houthi attacks disrupt global shipping routes, impacting supply chains.' },
     { type: 'warning', title: 'China Property Sector Stress', region: 'Asia', description: 'Country Garden and Evergrande defaults raise systemic risk concerns.' },
@@ -40,17 +13,25 @@ const globalAlerts = [
     { type: 'info', title: 'US Fed Pivot Expected', region: 'North America', description: 'Markets pricing in rate cuts starting Q1 2024.' },
 ];
 
-const recessionProbability = [
-    { country: 'United States', probability: 35 },
-    { country: 'Euro Zone', probability: 55 },
-    { country: 'United Kingdom', probability: 45 },
-    { country: 'China', probability: 20 },
-    { country: 'Japan', probability: 30 },
-];
+export default async function GlobalTrackerPage() {
+    // Fetch data from DB
+    const { data: allIndicators } = await getGlobalIndicators();
 
-export default function GlobalTrackerPage() {
+    // Filter by type
+    const inflationData = allIndicators?.filter((i: any) => i.indicatorType === 'inflation') || [];
+    const gdpData = allIndicators?.filter((i: any) => i.indicatorType === 'gdp') || [];
+    const interestRates = allIndicators?.filter((i: any) => i.indicatorType === 'interest_rate') || [];
+    const recessionProbability = allIndicators?.filter((i: any) => i.indicatorType === 'recession_probability') || [];
+
+    // Country Code Logic (Simple mapping for demo, ideal: store in DB)
+    const getFlag = (country: string) => {
+        const flags: { [key: string]: string } = { 'United States': '🇺🇸', 'India': '🇮🇳', 'United Kingdom': '🇬🇧', 'Euro Zone': '🇪🇺', 'Japan': '🇯🇵', 'China': '🇨🇳', 'Brazil': '🇧🇷', 'Germany': '🇩🇪', 'Russia': '🇷🇺', 'Canada': '🇨🇦' };
+        return flags[country] || '🌐';
+    };
+
     return (
-        <div className="min-h-screen py-8 px-4">
+        <div className="min-h-screen py-8 px-4 pt-32">
+            {/* Added pt-32 to account for fixed navbar */}
             <div className="mx-auto max-w-7xl">
                 {/* Header */}
                 <div className="mb-8">
@@ -58,7 +39,7 @@ export default function GlobalTrackerPage() {
                         <Globe className="h-8 w-8 text-cyan-400" />
                         <h1 className="text-3xl font-bold text-white">Global Macro Tracker</h1>
                     </div>
-                    <p className="text-slate-400">Monitor global economic indicators, inflation, GDP, and crisis alerts.</p>
+                    <p className="text-slate-400">Monitor real-time global economic indicators.</p>
                 </div>
 
                 {/* Global Alerts */}
@@ -108,24 +89,22 @@ export default function GlobalTrackerPage() {
                             <CardDescription>Latest consumer price index data by country</CardDescription>
                         </CardHeader>
                         <CardContent className="p-0">
-                            {inflationData.map((item) => (
-                                <div key={item.country} className="flex items-center justify-between p-4 border-b border-slate-800 last:border-0 hover:bg-slate-800/50 transition-colors">
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-xl">{item.code}</span>
-                                        <span className="font-medium text-white">{item.country}</span>
+                            {inflationData.length === 0 ? (
+                                <div className="p-8 text-center text-slate-500">No data available. Add data in Admin Panel.</div>
+                            ) : (
+                                inflationData.map((item: any) => (
+                                    <div key={item.id} className="flex items-center justify-between p-4 border-b border-slate-800 last:border-0 hover:bg-slate-800/50 transition-colors">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-xl">{getFlag(item.country)}</span>
+                                            <span className="font-medium text-white">{item.country}</span>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <span className="font-mono text-lg text-white">{item.value}%</span>
+                                            <span className="text-xs text-slate-500">{item.period}</span>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-4">
-                                        <span className="font-mono text-lg text-white">{item.value}%</span>
-                                        <span className={cn(
-                                            'flex items-center gap-1 text-sm',
-                                            item.change < 0 ? 'text-green-400' : 'text-red-400'
-                                        )}>
-                                            {item.change < 0 ? <TrendingDown className="h-3 w-3" /> : <TrendingUp className="h-3 w-3" />}
-                                            {item.change > 0 ? '+' : ''}{item.change}%
-                                        </span>
-                                    </div>
-                                </div>
-                            ))}
+                                ))
+                            )}
                         </CardContent>
                     </Card>
 
@@ -136,32 +115,30 @@ export default function GlobalTrackerPage() {
                                 <span className="text-xl">📈</span>
                                 GDP Growth (YoY %)
                             </CardTitle>
-                            <CardDescription>Real GDP growth rates and forecasts</CardDescription>
+                            <CardDescription>Real GDP growth rates</CardDescription>
                         </CardHeader>
                         <CardContent className="p-0">
-                            {gdpData.map((item) => (
-                                <div key={item.country} className="flex items-center justify-between p-4 border-b border-slate-800 last:border-0 hover:bg-slate-800/50 transition-colors">
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-xl">{item.code}</span>
-                                        <span className="font-medium text-white">{item.country}</span>
+                            {gdpData.length === 0 ? (
+                                <div className="p-8 text-center text-slate-500">No data available. Add data in Admin Panel.</div>
+                            ) : (
+                                gdpData.map((item: any) => (
+                                    <div key={item.id} className="flex items-center justify-between p-4 border-b border-slate-800 last:border-0 hover:bg-slate-800/50 transition-colors">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-xl">{getFlag(item.country)}</span>
+                                            <span className="font-medium text-white">{item.country}</span>
+                                        </div>
+                                        <div className="flex items-center gap-4">
+                                            <span className={cn(
+                                                'font-mono text-lg',
+                                                item.value > 0 ? 'text-green-400' : 'text-red-400'
+                                            )}>
+                                                {item.value > 0 ? '+' : ''}{item.value}%
+                                            </span>
+                                            <Badge variant="outline">{item.period}</Badge>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-4">
-                                        <span className={cn(
-                                            'font-mono text-lg',
-                                            item.value > 0 ? 'text-green-400' : 'text-red-400'
-                                        )}>
-                                            {item.value > 0 ? '+' : ''}{item.value}%
-                                        </span>
-                                        <Badge variant={
-                                            item.status === 'growing' ? 'success' :
-                                                item.status === 'slowing' ? 'warning' :
-                                                    item.status === 'recession' ? 'danger' : 'outline'
-                                        }>
-                                            {item.status}
-                                        </Badge>
-                                    </div>
-                                </div>
-                            ))}
+                                ))
+                            )}
                         </CardContent>
                     </Card>
 
@@ -172,24 +149,27 @@ export default function GlobalTrackerPage() {
                                 <span className="text-xl">🏦</span>
                                 Central Bank Interest Rates
                             </CardTitle>
-                            <CardDescription>Key policy rates by major central banks</CardDescription>
+                            <CardDescription>Key policy rates</CardDescription>
                         </CardHeader>
                         <CardContent className="p-0">
-                            {interestRates.map((item) => (
-                                <div key={item.bank} className="flex items-center justify-between p-4 border-b border-slate-800 last:border-0 hover:bg-slate-800/50 transition-colors">
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-xl">{item.code}</span>
-                                        <div>
-                                            <p className="font-medium text-white">{item.bank}</p>
-                                            <p className="text-xs text-slate-500">Next: {item.nextMeeting}</p>
+                            {interestRates.length === 0 ? (
+                                <div className="p-8 text-center text-slate-500">No data available. Add data in Admin Panel.</div>
+                            ) : (
+                                interestRates.map((item: any) => (
+                                    <div key={item.id} className="flex items-center justify-between p-4 border-b border-slate-800 last:border-0 hover:bg-slate-800/50 transition-colors">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-xl">{getFlag(item.country)}</span>
+                                            <div>
+                                                <p className="font-medium text-white">{item.country}</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="font-mono text-lg text-white">{item.value}%</span>
+                                            <p className="text-xs text-slate-500">{item.period}</p>
                                         </div>
                                     </div>
-                                    <div className="text-right">
-                                        <span className="font-mono text-lg text-white">{item.rate}%</span>
-                                        <Badge variant="outline" className="ml-2">{item.lastChange}</Badge>
-                                    </div>
-                                </div>
-                            ))}
+                                ))
+                            )}
                         </CardContent>
                     </Card>
 
@@ -198,35 +178,39 @@ export default function GlobalTrackerPage() {
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <span className="text-xl">⚠️</span>
-                                Recession Probability (12-month)
+                                Recession Probability
                             </CardTitle>
-                            <CardDescription>Model-based recession probability estimates</CardDescription>
+                            <CardDescription>Model-based estimates</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            {recessionProbability.map((item) => (
-                                <div key={item.country}>
-                                    <div className="flex justify-between text-sm mb-1">
-                                        <span className="text-white">{item.country}</span>
-                                        <span className={cn(
-                                            item.probability >= 50 ? 'text-red-400' :
-                                                item.probability >= 30 ? 'text-yellow-400' : 'text-green-400'
-                                        )}>
-                                            {item.probability}%
-                                        </span>
+                            {recessionProbability.length === 0 ? (
+                                <div className="p-8 text-center text-slate-500">No data available. Add data in Admin Panel.</div>
+                            ) : (
+                                recessionProbability.map((item: any) => (
+                                    <div key={item.id}>
+                                        <div className="flex justify-between text-sm mb-1">
+                                            <span className="text-white">{item.country}</span>
+                                            <span className={cn(
+                                                item.value >= 50 ? 'text-red-400' :
+                                                    item.value >= 30 ? 'text-yellow-400' : 'text-green-400'
+                                            )}>
+                                                {item.value}%
+                                            </span>
+                                        </div>
+                                        <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                                            <div
+                                                className={cn(
+                                                    'h-full rounded-full transition-all',
+                                                    item.value >= 50 ? 'bg-gradient-to-r from-red-500 to-pink-500' :
+                                                        item.value >= 30 ? 'bg-gradient-to-r from-yellow-500 to-orange-500' :
+                                                            'bg-gradient-to-r from-green-500 to-emerald-500'
+                                                )}
+                                                style={{ width: `${item.value}%` }}
+                                            />
+                                        </div>
                                     </div>
-                                    <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
-                                        <div
-                                            className={cn(
-                                                'h-full rounded-full transition-all',
-                                                item.probability >= 50 ? 'bg-gradient-to-r from-red-500 to-pink-500' :
-                                                    item.probability >= 30 ? 'bg-gradient-to-r from-yellow-500 to-orange-500' :
-                                                        'bg-gradient-to-r from-green-500 to-emerald-500'
-                                            )}
-                                            style={{ width: `${item.probability}%` }}
-                                        />
-                                    </div>
-                                </div>
-                            ))}
+                                ))
+                            )}
                         </CardContent>
                     </Card>
                 </div>

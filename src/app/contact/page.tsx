@@ -1,11 +1,53 @@
-import React from 'react';
-import { Mail, MessageSquare, MapPin, Phone } from 'lucide-react';
+'use client';
+
+import React, { useState } from 'react';
+import { Mail, MessageSquare, MapPin, Phone, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
 export default function ContactPage() {
+    const [formData, setFormData] = useState({
+        firstName: '',
+        lastName: '',
+        email: '',
+        subject: '',
+        message: ''
+    });
+    const [loading, setLoading] = useState(false);
+    const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        setFormData(prev => ({ ...prev, [e.target.id]: e.target.value }));
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setStatus('idle');
+
+        try {
+            const res = await fetch('/api/contact', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+
+            if (res.ok) {
+                setStatus('success');
+                setFormData({ firstName: '', lastName: '', email: '', subject: '', message: '' });
+            } else {
+                setStatus('error');
+            }
+        } catch (error) {
+            console.error(error);
+            setStatus('error');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-[#0f1218] pt-32 pb-20 px-4">
             <div className="max-w-4xl mx-auto">
@@ -65,35 +107,92 @@ export default function ContactPage() {
                     {/* Contact Form */}
                     <div className="bg-[#1a1f2e] border border-slate-700/50 rounded-xl p-6 md:p-8">
                         <h2 className="text-2xl font-bold text-white mb-6">Send a Message</h2>
-                        <form className="space-y-4">
+
+                        {status === 'success' && (
+                            <div className="mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-lg flex items-center gap-3 text-green-400">
+                                <CheckCircle className="h-5 w-5" />
+                                <p>Message sent successfully! We'll allow 24 hours for a response.</p>
+                            </div>
+                        )}
+
+                        {status === 'error' && (
+                            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-3 text-red-400">
+                                <AlertCircle className="h-5 w-5" />
+                                <p>Failed to send message. Please try again later.</p>
+                            </div>
+                        )}
+
+                        <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <label htmlFor="firstName" className="text-sm font-medium text-slate-300">First Name</label>
-                                    <Input id="firstName" placeholder="John" className="bg-[#0f1218] border-slate-700 text-white" />
+                                    <Input
+                                        id="firstName"
+                                        value={formData.firstName}
+                                        onChange={handleChange}
+                                        placeholder="John"
+                                        required
+                                        className="bg-[#0f1218] border-slate-700 text-white"
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <label htmlFor="lastName" className="text-sm font-medium text-slate-300">Last Name</label>
-                                    <Input id="lastName" placeholder="Doe" className="bg-[#0f1218] border-slate-700 text-white" />
+                                    <Input
+                                        id="lastName"
+                                        value={formData.lastName}
+                                        onChange={handleChange}
+                                        placeholder="Doe"
+                                        required
+                                        className="bg-[#0f1218] border-slate-700 text-white"
+                                    />
                                 </div>
                             </div>
 
                             <div className="space-y-2">
                                 <label htmlFor="email" className="text-sm font-medium text-slate-300">Email</label>
-                                <Input id="email" type="email" placeholder="john@example.com" className="bg-[#0f1218] border-slate-700 text-white" />
+                                <Input
+                                    id="email"
+                                    type="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    placeholder="john@example.com"
+                                    required
+                                    className="bg-[#0f1218] border-slate-700 text-white"
+                                />
                             </div>
 
                             <div className="space-y-2">
                                 <label htmlFor="subject" className="text-sm font-medium text-slate-300">Subject</label>
-                                <Input id="subject" placeholder="How can we help?" className="bg-[#0f1218] border-slate-700 text-white" />
+                                <Input
+                                    id="subject"
+                                    value={formData.subject}
+                                    onChange={handleChange}
+                                    placeholder="How can we help?"
+                                    required
+                                    className="bg-[#0f1218] border-slate-700 text-white"
+                                />
                             </div>
 
                             <div className="space-y-2">
                                 <label htmlFor="message" className="text-sm font-medium text-slate-300">Message</label>
-                                <Textarea id="message" placeholder="Your message..." rows={4} className="bg-[#0f1218] border-slate-700 text-white" />
+                                <Textarea
+                                    id="message"
+                                    value={formData.message}
+                                    onChange={handleChange}
+                                    placeholder="Your message..."
+                                    rows={4}
+                                    required
+                                    className="bg-[#0f1218] border-slate-700 text-white"
+                                />
                             </div>
 
-                            <Button type="button" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
-                                Send Message <MessageSquare className="ml-2 h-4 w-4" />
+                            <Button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                            >
+                                {loading ? 'Sending...' : 'Send Message'}
+                                {!loading && <MessageSquare className="ml-2 h-4 w-4" />}
                             </Button>
                         </form>
                     </div>
@@ -102,3 +201,4 @@ export default function ContactPage() {
         </div>
     );
 }
+

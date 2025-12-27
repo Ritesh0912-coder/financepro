@@ -15,6 +15,7 @@ export interface INews extends Document {
     isBreaking: boolean;
     isFeatured: boolean;
     views: number;
+    status: 'published' | 'draft' | 'archived'; // Added status
     createdAt: Date;
     updatedAt: Date;
 }
@@ -35,6 +36,7 @@ const NewsSchema = new Schema<INews>(
         isBreaking: { type: Boolean, default: false },
         isFeatured: { type: Boolean, default: false },
         views: { type: Number, default: 0 },
+        status: { type: String, enum: ['published', 'draft', 'archived'], default: 'published' },
     },
     { timestamps: true }
 );

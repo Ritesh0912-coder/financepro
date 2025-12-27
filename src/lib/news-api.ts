@@ -1,4 +1,5 @@
-import { INews } from '@/models/News';
+import { INews, News } from '@/models/News'; // Import News model
+import dbConnect from './db'; // Import dbConnect for syncing
 
 const NEWS_API_KEY = process.env.NEWS_API_KEY;
 const BASE_URL = 'https://newsapi.org/v2';
@@ -72,7 +73,6 @@ export async function fetchFinanceNews(page = 1, pageSize = 20, query = ''): Pro
             .filter(article => article.title !== '[Removed]') // Filter removed articles
             .map(article => {
                 // Determine mock impact for display if not analyzed yet
-                // Real analysis happens via Groq on the detailed page
                 const isPositive = /surge|rise|high|gain|profit|bull/i.test(article.title);
                 const isNegative = /drop|fall|low|loss|bear|crash/i.test(article.title);
                 const impact = isPositive ? 'Positive' : (isNegative ? 'Negative' : 'Neutral');
@@ -88,7 +88,7 @@ export async function fetchFinanceNews(page = 1, pageSize = 20, query = ''): Pro
 
                 return {
                     title: article.title,
-                    slug: article.url,
+                    slug: article.url, // Using URL as a unique slug key for upsert
                     content: article.content || article.description || '',
                     summary: article.description || '',
                     source: article.source.name,
@@ -101,9 +101,32 @@ export async function fetchFinanceNews(page = 1, pageSize = 20, query = ''): Pro
                     isBreaking: false,
                     isFeatured: false,
                     marketImpact: impact,
-                    aiSummary: 'Click for AI Analysis'
+                    aiSummary: 'Click for AI Analysis',
+                    status: 'published' as const // Use 'published' for active news
                 };
             });
+
+        // --- Database Sync (Upsert) ---
+        // Async background sync so we don't slow down the fetch too much
+        (async () => {
+            try {
+                await dbConnect();
+                const operations = articles.map(article => ({
+                    updateOne: {
+                        filter: { slug: article.slug },
+                        update: { $setOnInsert: article },
+                        upsert: true
+                    }
+                }));
+                if (operations.length > 0) {
+                    await News.bulkWrite(operations);
+                    console.log(`Synced ${operations.length} articles to DB.`);
+                }
+            } catch (dbErr) {
+                console.error("Failed to sync news to DB:", dbErr);
+            }
+        })();
+        // --------------------------------
 
         const result = {
             articles: articles as unknown as Partial<INews>[],

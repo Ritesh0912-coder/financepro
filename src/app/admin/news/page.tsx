@@ -18,7 +18,8 @@ import {
     Trash2,
     Eye,
     Sparkles,
-    MoreVertical
+    MoreVertical,
+    RefreshCw
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -26,69 +27,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 
-// Mock news data
-const newsItems = [
-    {
-        id: '1',
-        title: 'Federal Reserve Signals Potential Rate Cuts in 2024',
-        category: 'Economy',
-        source: 'Reuters',
-        publishedAt: '2024-01-10 14:30',
-        views: 12450,
-        hasSummary: true,
-        isBreaking: true,
-        isFeatured: true,
-        status: 'published',
-    },
-    {
-        id: '2',
-        title: 'Bitcoin Surges Past $45,000 on ETF Approval Momentum',
-        category: 'Crypto',
-        source: 'Bloomberg',
-        publishedAt: '2024-01-10 12:00',
-        views: 8920,
-        hasSummary: true,
-        isBreaking: true,
-        isFeatured: false,
-        status: 'published',
-    },
-    {
-        id: '3',
-        title: 'NIFTY 50 Hits All-Time High Amid Strong Earnings',
-        category: 'Stocks',
-        source: 'MoneyControl',
-        publishedAt: '2024-01-10 10:30',
-        views: 6780,
-        hasSummary: false,
-        isBreaking: false,
-        isFeatured: true,
-        status: 'published',
-    },
-    {
-        id: '4',
-        title: 'Oil Prices Climb on Middle East Supply Concerns',
-        category: 'Commodities',
-        source: 'Financial Times',
-        publishedAt: '2024-01-10 09:15',
-        views: 4560,
-        hasSummary: true,
-        isBreaking: false,
-        isFeatured: false,
-        status: 'published',
-    },
-    {
-        id: '5',
-        title: 'Euro Strengthens Against Dollar on ECB Hawkish Stance',
-        category: 'Forex',
-        source: 'Reuters',
-        publishedAt: '2024-01-10 08:00',
-        views: 3210,
-        hasSummary: false,
-        isBreaking: false,
-        isFeatured: false,
-        status: 'draft',
-    },
-];
+import { getAllNews } from '@/actions/admin';
+
+// Mock news data removed - using backend data now
 
 const categories = [
     { value: 'all', label: 'All Categories' },
@@ -101,6 +42,24 @@ const categories = [
 
 export default function AdminNewsPage() {
     const [selectedCategory, setSelectedCategory] = useState('all');
+    const [newsItems, setNewsItems] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    React.useEffect(() => {
+        const fetchNews = async () => {
+            setLoading(true);
+            const res = await getAllNews();
+            if (res.success && res.data) {
+                setNewsItems(res.data);
+            }
+            setLoading(false);
+        };
+        fetchNews();
+    }, []);
+
+    const filteredNews = newsItems.filter(item =>
+        selectedCategory === 'all' || item.category.toLowerCase() === selectedCategory
+    );
 
     return (
         <div className="min-h-screen bg-slate-950">
@@ -162,12 +121,24 @@ export default function AdminNewsPage() {
                             <h1 className="text-2xl font-bold text-white">News Management</h1>
                             <p className="text-slate-400">Manage all news articles and AI summaries</p>
                         </div>
-                        <Link href="/admin/news/new">
-                            <Button>
-                                <Plus className="mr-2 h-4 w-4" />
-                                Add News
+                        <div className="flex gap-3">
+                            <Button variant="outline" onClick={async () => {
+                                setLoading(true);
+                                await syncNews();
+                                const res = await getAllNews();
+                                if (res.success && res.data) setNewsItems(res.data);
+                                setLoading(false);
+                            }}>
+                                <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                                Sync API
                             </Button>
-                        </Link>
+                            <Link href="/admin/news/new">
+                                <Button>
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Add News
+                                </Button>
+                            </Link>
+                        </div>
                     </div>
 
                     {/* Filters */}
@@ -208,51 +179,60 @@ export default function AdminNewsPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {newsItems.map((news) => (
-                                        <tr key={news.id} className="border-b border-slate-800 hover:bg-slate-800/50 transition-colors">
-                                            <td className="p-4">
-                                                <div className="max-w-md">
-                                                    <p className="font-medium text-white line-clamp-1">{news.title}</p>
-                                                    <div className="flex items-center gap-2 mt-1">
-                                                        {news.isBreaking && <Badge variant="danger" className="text-xs">Breaking</Badge>}
-                                                        {news.isFeatured && <Badge variant="warning" className="text-xs">Featured</Badge>}
-                                                        {news.hasSummary && <Badge variant="info" className="text-xs"><Sparkles className="h-3 w-3 mr-1" />AI</Badge>}
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="p-4">
-                                                <Badge variant="outline">{news.category}</Badge>
-                                            </td>
-                                            <td className="p-4 text-slate-400">{news.source}</td>
-                                            <td className="p-4 text-slate-400 text-sm">{news.publishedAt}</td>
-                                            <td className="p-4">
-                                                <div className="flex items-center gap-1 text-slate-400">
-                                                    <Eye className="h-4 w-4" />
-                                                    {news.views.toLocaleString()}
-                                                </div>
-                                            </td>
-                                            <td className="p-4">
-                                                <Badge variant={news.status === 'published' ? 'success' : 'outline'}>
-                                                    {news.status}
-                                                </Badge>
-                                            </td>
-                                            <td className="p-4">
-                                                <div className="flex items-center gap-2">
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                        <Edit className="h-4 w-4" />
-                                                    </Button>
-                                                    {!news.hasSummary && (
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-cyan-400">
-                                                            <Sparkles className="h-4 w-4" />
-                                                        </Button>
-                                                    )}
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-400">
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
-                                                </div>
-                                            </td>
+                                    {loading ? (
+                                        <tr>
+                                            <td colSpan={7} className="p-8 text-center text-slate-500">Loading articles...</td>
                                         </tr>
-                                    ))}
+                                    ) : filteredNews.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={7} className="p-8 text-center text-slate-500">No articles found.</td>
+                                        </tr>
+                                    ) : (
+                                        filteredNews.map((news) => (
+                                            <tr key={news.id} className="border-b border-slate-800 hover:bg-slate-800/50 transition-colors">
+                                                <td className="p-4">
+                                                    <div className="max-w-md">
+                                                        <p className="font-medium text-white line-clamp-1">{news.title}</p>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            {news.isBreaking && <Badge variant="danger" className="text-xs">Breaking</Badge>}
+                                                            {news.isFeatured && <Badge variant="warning" className="text-xs">Featured</Badge>}
+                                                            {news.hasSummary && <Badge variant="info" className="text-xs"><Sparkles className="h-3 w-3 mr-1" />AI</Badge>}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="p-4">
+                                                    <Badge variant="outline">{news.category}</Badge>
+                                                </td>
+                                                <td className="p-4 text-slate-400">{news.source}</td>
+                                                <td className="p-4 text-slate-400 text-sm">{news.publishedAt}</td>
+                                                <td className="p-4">
+                                                    <div className="flex items-center gap-1 text-slate-400">
+                                                        <Eye className="h-4 w-4" />
+                                                        {news.views.toLocaleString()}
+                                                    </div>
+                                                </td>
+                                                <td className="p-4">
+                                                    <Badge variant={news.status === 'published' ? 'success' : 'outline'}>
+                                                        {news.status}
+                                                    </Badge>
+                                                </td>
+                                                <td className="p-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                            <Edit className="h-4 w-4" />
+                                                        </Button>
+                                                        {!news.hasSummary && (
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-cyan-400">
+                                                                <Sparkles className="h-4 w-4" />
+                                                            </Button>
+                                                        )}
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-400">
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )))}
                                 </tbody>
                             </table>
                         </CardContent>

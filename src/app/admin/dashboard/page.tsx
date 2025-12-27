@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, FileText, Settings, Activity, LogOut } from 'lucide-react';
+import { Users, FileText, Settings, Activity, LogOut, Mail } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { getAdminStats } from '@/actions/admin';
 import Link from 'next/link';
@@ -113,6 +113,11 @@ export default function AdminDashboard() {
                             <Link href="/admin/users">
                                 <Button variant="outline" className="w-full border-slate-700 hover:bg-slate-800 text-slate-300 h-20 flex flex-col gap-2">
                                     <Users className="h-5 w-5" /> Manage Users
+                                </Button>
+                            </Link>
+                            <Link href="/admin/messages">
+                                <Button variant="outline" className="w-full border-slate-700 hover:bg-slate-800 text-slate-300 h-20 flex flex-col gap-2">
+                                    <Mail className="h-5 w-5" /> Contact Messages
                                 </Button>
                             </Link>
                         </div>

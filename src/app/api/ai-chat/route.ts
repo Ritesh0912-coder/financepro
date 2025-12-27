@@ -5,33 +5,49 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
 import dbConnect from "@/lib/db";
 import { ChatMessage } from "@/models/ChatMessage";
+import { ChatSession } from "@/models/ChatSession";
 
 // Case-insensitive check for user id in session
 const getUserId = (session: any) => {
     return session?.user?.id || session?.user?._id || session?.sub;
 };
 
-// GET: Fetch Chat History
+// GET: Fetch Chat History or Session List
 export async function GET(req: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session) return NextResponse.json({ messages: [] });
+        if (!session) return NextResponse.json({ messages: [], sessions: [] });
 
         await dbConnect();
         const userId = getUserId(session);
+        if (!userId) return NextResponse.json({ messages: [], sessions: [] });
 
-        if (!userId) return NextResponse.json({ messages: [] });
+        const { searchParams } = new URL(req.url);
+        const mode = searchParams.get('mode'); // 'list' or 'messages'
+        const sessionId = searchParams.get('sessionId');
 
-        const history = await ChatMessage.find({ userId })
-            .sort({ createdAt: 1 })
-            .limit(50); // Fetch last 50 messages for context
+        // 1. Fetch List of Sessions (Sidebar)
+        if (mode === 'list') {
+            const sessions = await ChatSession.find({ userId }).sort({ updatedAt: -1 });
+            return NextResponse.json({ sessions });
+        }
 
-        return NextResponse.json({
-            messages: history.map(m => ({ role: m.role, content: m.content }))
-        });
+        // 2. Fetch Messages for a specific Session
+        if (sessionId) {
+            const history = await ChatMessage.find({ userId, sessionId })
+                .sort({ createdAt: 1 })
+                .limit(50);
+            return NextResponse.json({
+                messages: history.map(m => ({ role: m.role, content: m.content }))
+            });
+        }
+
+        // Default: Return nothing (New Chat state)
+        return NextResponse.json({ messages: [] });
+
     } catch (error) {
         console.error('Fetch History Error:', error);
-        return NextResponse.json({ messages: [] });
+        return NextResponse.json({ messages: [], sessions: [] });
     }
 }
 
@@ -50,6 +66,8 @@ export async function POST(req: NextRequest) {
         const session = await getServerSession(authOptions);
         const body = await req.json();
         const { messages } = body;
+        let { sessionId } = body;
+
         const lastUserMessage = messages[messages.length - 1];
 
         // 1. Gather Context (Resiliently)
@@ -113,9 +131,22 @@ export async function POST(req: NextRequest) {
                 await dbConnect();
                 const userId = getUserId(session);
                 if (userId) {
+                    // Create Session if none exists
+                    if (!sessionId) {
+                        const newSession = await ChatSession.create({
+                            userId,
+                            title: lastUserMessage.content.substring(0, 30) + (lastUserMessage.content.length > 30 ? '...' : '')
+                        });
+                        sessionId = newSession._id;
+                    } else {
+                        // Update session timestamp
+                        await ChatSession.findByIdAndUpdate(sessionId, { updatedAt: new Date() });
+                    }
+
+                    // Save Messages
                     await ChatMessage.create([
-                        { userId, role: 'user', content: lastUserMessage.content },
-                        { userId, role: 'assistant', content: reply }
+                        { userId, sessionId, role: 'user', content: lastUserMessage.content },
+                        { userId, sessionId, role: 'assistant', content: reply }
                     ]);
                 }
             } catch (dbErr) {
