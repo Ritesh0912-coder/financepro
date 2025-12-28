@@ -15,9 +15,6 @@ export const metadata: Metadata = {
   title: "Global Finance IN | Financial Intelligence Platform",
   description: "Your premier destination for global financial news, market data, and investment tools. Real-time stock indices, forex, crypto, and macro economic insights.",
   keywords: ["finance", "stock market", "crypto", "forex", "news", "investment", "trading"],
-  icons: {
-    icon: "/favicon.png",
-  },
 };
 
 export default function RootLayout({
