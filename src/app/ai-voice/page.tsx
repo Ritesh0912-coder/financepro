@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-    Mic, X, Plus, Search, Send, Sparkles, User, Globe, ArrowUp, Volume2, MessageSquare, Menu, ChevronLeft, Trash2
+    Mic, X, Plus, Search, Send, Sparkles, User, Globe, ArrowUp, Volume2, MessageSquare, Menu, ChevronLeft, Trash2, Copy, RotateCcw, Check
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -114,6 +114,7 @@ export default function AiVoicePage() {
     const [messages, setMessages] = useState<{ role: 'user' | 'assistant', content: string }[]>([]);
     const [state, setState] = useState<'idle' | 'listening' | 'processing' | 'speaking'>('idle');
     const [hasInteraction, setHasInteraction] = useState(false);
+    const [copiedId, setCopiedId] = useState<number | null>(null);
 
     // Session Management
     const [sessions, setSessions] = useState<ChatSession[]>([]);
@@ -162,6 +163,16 @@ export default function AiVoicePage() {
             }
         }
     }, [state]);
+
+    const copyToClipboard = async (text: string, idx: number) => {
+        try {
+            await navigator.clipboard.writeText(text);
+            setCopiedId(idx);
+            setTimeout(() => setCopiedId(null), 2000);
+        } catch (err) {
+            console.error('Failed to copy!', err);
+        }
+    };
 
     const speak = useCallback(async (text: string) => {
         window.speechSynthesis.cancel();
@@ -263,11 +274,16 @@ export default function AiVoicePage() {
                 }
             }
 
-            // Check if the server returned a JSON error message instead of a stream
-            if (!isFirstChunk && accumulatedReply.startsWith('{"reply":')) {
-                const errorJson = JSON.parse(accumulatedReply);
-                accumulatedReply = errorJson.reply;
-                setMessages(prev => [...newMessages, { role: 'assistant', content: accumulatedReply }]);
+            // Handle non-streaming JSON responses (e.g., balance errors)
+            if (accumulatedReply.trim().startsWith('{"reply":')) {
+                try {
+                    const errorJson = JSON.parse(accumulatedReply);
+                    accumulatedReply = errorJson.reply;
+                    setMessages([...newMessages, { role: 'assistant', content: accumulatedReply }]);
+                    isFirstChunk = false; // Prevent further processing
+                } catch (parseErr) {
+                    console.error("Failed to parse JSON error:", parseErr);
+                }
             }
 
             if (accumulatedReply.trim() && accumulatedReply !== 'Thinking...') {
@@ -447,41 +463,83 @@ export default function AiVoicePage() {
                                         </div>
                                     </div>
 
-                                    <div className="space-y-6">
+                                    <div className="flex flex-col w-full space-y-6">
                                         {messages.map((msg, idx) => (
                                             <motion.div
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
+                                                initial={{ opacity: 0, scale: 0.95 }}
+                                                animate={{ opacity: 1, scale: 1 }}
                                                 key={idx}
                                                 className={cn(
-                                                    "flex gap-4 p-4 rounded-2xl border transition-all relative group shadow-xl max-w-[85%] w-fit",
+                                                    "flex gap-4 p-4 rounded-2xl border transition-all relative group shadow-xl max-w-[85%]",
                                                     msg.role === 'user'
-                                                        ? "bg-orange-500/[0.08] border-orange-500/30 self-end rounded-tr-none"
-                                                        : "bg-white/[0.05] border-white/10 self-start rounded-tl-none"
+                                                        ? "bg-orange-500/[0.12] border-orange-500/30 self-end rounded-tr-none ml-auto flex-row-reverse"
+                                                        : "bg-white/[0.05] border-white/10 self-start rounded-tl-none mr-auto"
                                                 )}
                                             >
                                                 <div className={cn(
-                                                    "h-7 w-7 rounded-full flex items-center justify-center shrink-0 shadow-inner",
-                                                    msg.role === 'assistant' ? "bg-orange-500 text-white shadow-orange-500/40" : "bg-slate-800 text-slate-400"
+                                                    "h-8 w-8 rounded-full flex items-center justify-center shrink-0 shadow-inner overflow-hidden ring-1",
+                                                    msg.role === 'assistant'
+                                                        ? "bg-orange-500 text-white ring-orange-400/50 shadow-orange-500/40"
+                                                        : "bg-slate-700 ring-white/20"
                                                 )}>
-                                                    {msg.role === 'assistant' ? <Sparkles className="h-3.5 w-3.5" /> : <User className="h-3.5 w-3.5" />}
+                                                    {msg.role === 'assistant' ? (
+                                                        <Sparkles className="h-4 w-4" />
+                                                    ) : (
+                                                        session?.user?.image ? (
+                                                            <img
+                                                                src={session.user.image}
+                                                                alt={session.user.name || 'User'}
+                                                                className="h-full w-full object-cover"
+                                                                onError={(e) => {
+                                                                    (e.target as HTMLImageElement).style.display = 'none';
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <User className="h-4 w-4 text-white/80" />
+                                                        )
+                                                    )}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <div className={cn(
                                                         "text-slate-200 text-sm md:text-base leading-relaxed font-normal whitespace-pre-wrap",
+                                                        msg.role === 'user' ? "text-right" : "text-left",
                                                         msg.content === 'Thinking...' && "animate-pulse italic opacity-60"
                                                     )}>
                                                         {msg.content}
                                                     </div>
-                                                    {msg.role === 'assistant' && msg.content !== 'Thinking...' && (
+
+                                                    <div className={cn(
+                                                        "flex items-center gap-3 mt-3",
+                                                        msg.role === 'user' ? "justify-end" : "justify-start"
+                                                    )}>
+                                                        {msg.role === 'assistant' && msg.content !== 'Thinking...' && (
+                                                            <button
+                                                                onClick={() => speak(msg.content)}
+                                                                className="flex items-center gap-1.5 text-[10px] text-orange-400/50 hover:text-orange-400 transition-colors tracking-widest font-semibold uppercase"
+                                                            >
+                                                                <Volume2 className="h-3.5 w-3.5" />
+                                                                Replay
+                                                            </button>
+                                                        )}
+
                                                         <button
-                                                            onClick={() => speak(msg.content)}
-                                                            className="flex items-center gap-1.5 text-[10px] text-orange-400/50 hover:text-orange-400 transition-colors mt-3 tracking-widest font-semibold uppercase"
+                                                            onClick={() => copyToClipboard(msg.content, idx)}
+                                                            className="flex items-center gap-1.5 text-[10px] text-slate-500 hover:text-slate-300 transition-colors tracking-widest font-semibold uppercase"
                                                         >
-                                                            <Volume2 className="h-3 w-3" />
-                                                            Replay
+                                                            {copiedId === idx ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+                                                            {copiedId === idx ? 'Copied' : 'Copy'}
                                                         </button>
-                                                    )}
+
+                                                        {msg.role === 'user' && (
+                                                            <button
+                                                                onClick={() => setInputQuery(msg.content)}
+                                                                className="flex items-center gap-1.5 text-[10px] text-slate-500 hover:text-slate-300 transition-colors tracking-widest font-semibold uppercase"
+                                                            >
+                                                                <RotateCcw className="h-3.5 w-3.5" />
+                                                                Revert
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </motion.div>
                                         ))}

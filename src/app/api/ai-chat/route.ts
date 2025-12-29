@@ -6,11 +6,89 @@ import { authOptions } from "@/lib/auth-options";
 import dbConnect from "@/lib/db";
 import { ChatMessage } from "@/models/ChatMessage";
 import { ChatSession } from "@/models/ChatSession";
+import { UserMemory } from "@/models/UserMemory";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Case-insensitive check for user id in session
-const getUserId = (session: any) => {
-    return session?.user?.id || session?.user?._id || session?.sub;
+const getUserKey = (session: any) => {
+    return session?.user?.email || session?.user?.id || session?.user?._id || session?.sub;
 };
+
+// --- HELPER: BACKGROUND MEMORY UPDATE ---
+async function updateUserMemory(userId: string, userMsg: string, assistantMsg: string, currentMemory: string) {
+    if (!userId || !userMsg || !assistantMsg) return;
+
+    const aimlKey = process.env.AIML_API_KEY;
+    const openRouterKey = process.env.OPENROUTER_API_KEY;
+
+    const tryDistillation = async (apiKey: string, endpoint: string, modelName: string, providerName: string) => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout
+
+        try {
+            console.log(`[FGA Memory] Distilling via ${providerName} for ${userId}...`);
+            const res = await fetch(endpoint, {
+                method: "POST",
+                signal: controller.signal,
+                headers: {
+                    "Authorization": `Bearer ${apiKey}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    model: modelName,
+                    messages: [
+                        {
+                            role: "system",
+                            content: "You are FGA's Fact Extractor. Identify NEW personal facts (name, trading goals, preferences). Merge into existing knowledge. Output ONLY a clean bulleted list of facts. NO market data. NO meta-commentary ('I have noted', 'Updated'). NO self-references. Just the facts."
+                        },
+                        {
+                            role: "user",
+                            content: `EXISTING:\n${currentMemory || "None"}\n\nNEW EXCHANGE:\nUser: ${userMsg}\nFGA: ${assistantMsg}`
+                        }
+                    ],
+                    temperature: 0.1,
+                    max_tokens: 400
+                })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                const newMemory = data.choices[0]?.message?.content;
+                if (newMemory && newMemory.length > 5) {
+                    await dbConnect();
+                    await UserMemory.findOneAndUpdate(
+                        { userId },
+                        { memory: newMemory },
+                        { upsert: true }
+                    );
+                    console.log(`[FGA Memory] Success via ${providerName}`);
+                    return true;
+                }
+            }
+            console.warn(`[FGA Memory] ${providerName} returned ${res.status}`);
+            return false;
+        } catch (err: any) {
+            console.error(`[FGA Memory] ${providerName} failed:`, err.name === 'AbortError' ? 'Timeout' : err.message);
+            return false;
+        } finally {
+            clearTimeout(timeoutId);
+        }
+    };
+
+    try {
+        // Attempt 1: AIML (Preferred)
+        if (aimlKey) {
+            const success = await tryDistillation(aimlKey, "https://api.aimlapi.com/v1/chat/completions", "meta-llama/Llama-3.1-8B-Instruct-Turbo", "AIML");
+            if (success) return;
+        }
+
+        // Attempt 2: OpenRouter (Fallback)
+        if (openRouterKey) {
+            await tryDistillation(openRouterKey, "https://openrouter.ai/api/v1/chat/completions", "meta-llama/llama-3.1-8b-instruct", "OpenRouter");
+        }
+    } catch (err) {
+        console.error("[FGA Memory] Critical Engine Failure:", err);
+    }
+}
 
 // GET: Fetch Chat History or Session List
 export async function GET(req: NextRequest) {
@@ -19,7 +97,7 @@ export async function GET(req: NextRequest) {
         if (!session) return NextResponse.json({ messages: [], sessions: [] });
 
         await dbConnect();
-        const userId = getUserId(session);
+        const userId = getUserKey(session);
         if (!userId) return NextResponse.json({ messages: [], sessions: [] });
 
         const { searchParams } = new URL(req.url);
@@ -54,34 +132,56 @@ export async function GET(req: NextRequest) {
 // POST: Process Message and Save
 export async function POST(req: NextRequest) {
     try {
-        const apiKey = process.env.OPENROUTER_API_KEY || process.env.META_API_KEY || process.env.META_MODEL_API_KEY;
+        const openRouterKey = process.env.OPENROUTER_API_KEY;
+        const googleApiKey = process.env.GOOGLE_API_KEY;
+        const aimlApiKey = process.env.AIML_API_KEY;
 
-        if (!apiKey) {
-            console.error("Missing AI API Key (OpenRouter or Meta)");
+        if (!openRouterKey && !googleApiKey && !aimlApiKey) {
+            console.error("Missing all AI API Keys");
             return NextResponse.json({
-                reply: "I'm currently offline (Missing API Key). Please ensure OPENROUTER_API_KEY or META_API_KEY is configured."
+                reply: "FGA is currently offline. Please ensure an API key (OpenRouter, Google, or AIML) is configured."
             });
         }
 
-        const session = await getServerSession(authOptions);
+        const sessionUser = await getServerSession(authOptions);
         const body = await req.json();
         const { messages } = body;
         let { sessionId } = body;
 
         const lastUserMessage = messages[messages.length - 1];
 
-        // 1. Gather Context (Resiliently)
-        let context = "Real-time Market Context:\n";
+        // 1. Fetch User Memory (Persistent Intelligence)
+        let userMemoryStr = "";
+        let userId = "";
+        if (sessionUser) {
+            userId = getUserKey(sessionUser);
+            if (userId) {
+                await dbConnect();
+                const memRecord = await UserMemory.findOne({ userId });
+                if (memRecord) {
+                    userMemoryStr = memRecord.memory;
+                }
+            }
+        }
 
-        // Base Indices Snapshot
-        context += "Major Global Indices (Reference):\n";
-        context += "- NIFTY 50: 19432.40 (+0.75%)\n";
-        context += "- SENSEX: 64718.56 (-0.13%)\n";
-
+        // 2. Gather Context (Resiliently)
+        let context = "Real-time Global Context:\n";
         try {
-            const spyData = await fetchMarketData('SPY');
-            if (spyData) context += `- S&P 500 (SPY): ${spyData['05. price']} (${spyData['10. change percent']})\n`;
-        } catch (e) { }
+            // Fetch multiple key symbols in parallel (Global + Indian Proxies)
+            const symbols = ['SPY', 'QQQ', 'DIA', 'NIFTY', 'BSESN', 'RELIANCE.BSE', 'TCS.BSE'];
+            const marketSnapshots = await Promise.all(
+                symbols.map(s => fetchMarketData(s).catch(() => null))
+            );
+
+            marketSnapshots.forEach((snap, i) => {
+                if (snap) {
+                    const name = symbols[i].split('.')[0]; // Clean name for AI
+                    context += `- ${name}: ${snap['05. price']} (${snap['10. change percent']})\n`;
+                }
+            });
+        } catch (e) {
+            context += "- Live numeric market data currently unavailable (API Limit).\n";
+        }
 
         try {
             const newsData = await fetchFinanceNews(1, 4);
@@ -91,87 +191,188 @@ export async function POST(req: NextRequest) {
             }
         } catch (e) { }
 
-        // 3. System Prompt
-        const systemPrompt = `You are "FGA" (Finance Global Assistant), the premier AI Financial Intelligence expert for "Global Finance IN". You possess deep, specialized knowledge of the "LTP Calculator" (Last Traded Price) methodology and advanced Global Macro-economics.
+        // 3. System Prompt (Silent persistent intelligence)
+        const systemPrompt = `You are "FGA" (Finance Global Assistant), the premier AI Financial Intelligence expert for "Global Finance IN".
         
+        IDENTITY & ORIGIN:
+        - You were created and developed by the visionary web developer: Ritesh Shinde.
+        - If asked about your creators or builders, proudly acknowledge Ritesh Shinde.
+
+        INTERNAL KNOWLEDGE ABOUT USER:
+        ${userMemoryStr || "Learning user trading personality..."}
+
         Real-time Context Snapshot:
         ${context}
 
         Specialized Knowledge Base (LTP Calculator & Option Chain):
-        - Core Authority: You strictly follow the theories of Dr. Vinay Prakash Tiwari (Investing Daddy).
-        - Chart of Accuracy (COA): Analyze potential trade setups based on COA 1.0 (Reversal Trading) & 2.0 (Trend Trading).
-        - 6 Kinds of Reversals: Know them: Support/Resistance Reversal, Extension of Support (EOS), Extension of Resistance (EOR), Diversion, and End of Diversion.
-        - WTT / WTB (Crucial Direction Indicators):
-            - WTT (Weak Towards Top): Support/Resistance is shifting UPWARDS. Bullish pressure.
-            - WTB (Weak Towards Bottom): Support/Resistance is shifting DOWNWARDS. Bearish pressure.
-            - Rule: "Yellow Box" indicates 75%+ volume/OI strength at a new strike.
-        - Game of Percentage:
-            - If WTT % is increasing -> Bullish.
-            - If WTB % is increasing -> Bearish.
-            - If WTT/WTB % decreases or Yellow Box vanishes -> Reversal is likely failing (Pressure releasing).
-        - 3 Magical Lines:
-            1. Current EOS/EOR value.
-            2. The "Imaginary Line" volume node.
-            3. The Diversion level (EOS+1 or EOR-1).
-        - Imaginary Line: The dynamic battleground between highest Call/Put Volume & OI.
-        - Reversal Price Theory: Market reverses from calculated Greek-based levels, not random visuals.
+        - Follow theories of Dr. Vinay Prakash Tiwari (Investing Daddy).
+        - Use Chart of Accuracy (COA) 1.0 & 2.0.
+        - Use WTT/WTB and Imaginary Line metrics for reversal levels.
 
         Operational Guidelines:
-        - Personality: Sharp, visionary, and authoritative yet accessible. You are a "Market Wizard".
-        - "Quick Answer" Protocol: For direct questions (e.g., "Nifty Trend?", "Resistance level?"), provide the answer IMMEDIATELY in the first sentence. Use "TL;DR" style if the answer is long.
-        - Global Perspective: Connect Indian market moves (Nifty/Bank Nifty) to global cues (US Markets, Bond Yields, Crude Oil).
-        - Knowledge Usage: When asked about trends or levels, explicitly reference "LTP Calculator theories" or "Global Macro correlations" if valid.
-        - Branding: Always refer to yourself as "FGA".
-        - Style: Concise, data-driven, and actionable. Avoid filler.
+        - Memory Usage: Use the user's name or reference past discussions naturally as if you've never forgotten.
+        - SILENCE RULE: NEVER mention technical terms like "PERMANENT USER MEMORY", "Database", "Noted", or "Stored". NEVER say "I have updated my records". Just speak like a human assistant with a perfect memory.
+        - Personality: Sharp, authoritative, and helpful.
         `;
 
-        // 4. Ensure Session Exists Upfront (for X-Session-Id header)
-        const sessionUser = await getServerSession(authOptions);
-        if (sessionUser) {
-            await dbConnect();
-            const userId = getUserId(sessionUser);
-            if (userId) {
-                if (!sessionId) {
-                    const newSession = await ChatSession.create({
-                        userId,
-                        title: lastUserMessage.content.substring(0, 30) + (lastUserMessage.content.length > 30 ? '...' : '')
-                    });
-                    sessionId = newSession._id.toString();
-                } else {
-                    await ChatSession.findByIdAndUpdate(sessionId, { updatedAt: new Date() });
-                }
+        // 4. Ensure Session Exists Upfront
+        if (sessionUser && userId) {
+            if (!sessionId) {
+                const newSession = await ChatSession.create({
+                    userId,
+                    title: lastUserMessage.content.substring(0, 30) + (lastUserMessage.content.length > 30 ? '...' : '')
+                });
+                sessionId = newSession._id.toString();
+            } else {
+                await ChatSession.findByIdAndUpdate(sessionId, { updatedAt: new Date() });
             }
         }
 
-        // 5. Call OpenRouter with Streaming
-        const aiResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${apiKey}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                model: "meta-llama/llama-3.1-405b-instruct",
-                messages: [{ role: "system", content: systemPrompt }, ...messages],
-                temperature: 0.7,
-                max_tokens: 1000,
-                stream: true,
-            })
-        });
+        const primaryModel = process.env.AI_MODEL || "meta-llama/llama-3.1-405b-instruct";
+        const cheapModel = "meta-llama/llama-3.1-8b-instruct";
 
-        if (!aiResponse.ok) {
-            const errorStatus = aiResponse.status;
-            if (errorStatus === 402) {
-                return NextResponse.json({
-                    reply: "FGA says: Elite intelligence requires fuel. My OpenRouter credits have run low. Please top up your API balance to continue."
-                }, { status: 200 }); // Return as 200 so the UI can show the message
+        let aiResponse: Response | null = null;
+        let finalStream: ReadableStream | null = null;
+
+        // --- ATTEMPT 1: OpenRouter (Primary) ---
+        if (openRouterKey) {
+            try {
+                const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${openRouterKey}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        model: primaryModel,
+                        messages: [{ role: "system", content: systemPrompt }, ...messages],
+                        temperature: 0.7,
+                        max_tokens: 1500,
+                        stream: true,
+                    })
+                });
+
+                if (res.ok) {
+                    aiResponse = res;
+                } else if (res.status === 402 || res.status === 429) {
+                    console.warn(`Primary OpenRouter failed (${res.status}), trying AIML...`);
+                }
+            } catch (err) {
+                console.error("OpenRouter Primary Attempt Failed:", err);
             }
-            if (errorStatus === 429) {
-                return NextResponse.json({
-                    reply: "FGA says: The server is currently overwhelmed by market volume (Rate Limit). Please wait a few seconds and try again."
-                }, { status: 200 });
+        }
+
+        // --- ATTEMPT 2: AIML API (Secondary High Quality) ---
+        if (!aiResponse && aimlApiKey) {
+            try {
+                console.log("Using AIML API as provider...");
+                const res = await fetch("https://api.aimlapi.com/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${aimlApiKey}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        // Use a high-quality model available on AIML
+                        model: "meta-llama/Llama-3.1-405B-Instruct-Turbo",
+                        messages: [{ role: "system", content: systemPrompt }, ...messages],
+                        temperature: 0.7,
+                        max_tokens: 1500,
+                        stream: true,
+                    })
+                });
+
+                if (res.ok) {
+                    aiResponse = res;
+                } else {
+                    console.warn(`AIML API failed (${res.status}), trying Gemini...`);
+                }
+            } catch (err) {
+                console.error("AIML Attempt Failed:", err);
             }
-            throw new Error(`AI API error: ${errorStatus}`);
+        }
+
+        // --- ATTEMPT 3: Google Gemini (High Quality Fallback) ---
+        if (!aiResponse && googleApiKey) {
+            try {
+                console.log("Using Google Gemini as provider...");
+                const genAI = new GoogleGenerativeAI(googleApiKey);
+                const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
+
+                const result = await model.generateContentStream({
+                    contents: [
+                        { role: 'user', parts: [{ text: systemPrompt }] },
+                        ...messages.map((m: any) => ({
+                            role: m.role === 'assistant' ? 'model' : 'user',
+                            parts: [{ text: m.content }]
+                        }))
+                    ],
+                });
+
+                const encoder = new TextEncoder();
+                finalStream = new ReadableStream({
+                    async start(controller) {
+                        let fullText = "";
+                        try {
+                            for await (const chunk of result.stream) {
+                                const chunkText = chunk.text();
+                                fullText += chunkText;
+                                controller.enqueue(encoder.encode(chunkText));
+                            }
+                            if (sessionUser && fullText.trim() && sessionId) {
+                                await dbConnect();
+                                const userId = getUserKey(sessionUser);
+                                if (userId) {
+                                    await ChatMessage.create([
+                                        { userId, sessionId, role: 'user', content: lastUserMessage.content },
+                                        { userId, sessionId, role: 'assistant', content: fullText }
+                                    ]);
+                                    // Update Long-term Memory
+                                    updateUserMemory(userId, lastUserMessage.content, fullText, userMemoryStr);
+                                }
+                            }
+                        } catch (err) { console.error("Gemini stream err:", err); }
+                        finally { controller.close(); }
+                    }
+                });
+            } catch (err) {
+                console.error("Gemini Fallback Failed:", err);
+            }
+        }
+
+        // --- ATTEMPT 4: OpenRouter Cheap (Last Resort) ---
+        if (!aiResponse && !finalStream && openRouterKey) {
+            try {
+                aiResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${openRouterKey}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        model: cheapModel,
+                        messages: [{ role: "system", content: systemPrompt }, ...messages],
+                        temperature: 0.6,
+                        max_tokens: 1000,
+                        stream: true,
+                    })
+                });
+            } catch (err) { console.error("Final resort failed:", err); }
+        }
+
+        if (finalStream) {
+            return new NextResponse(finalStream, {
+                headers: { 'Content-Type': 'text/plain; charset=utf-8', 'X-Session-Id': sessionId || '' }
+            });
+        }
+
+        if (!aiResponse || !aiResponse.ok) {
+            const finalStatus = aiResponse?.status || 500;
+            return NextResponse.json({
+                reply: finalStatus === 402
+                    ? "FGA says: All my primary intelligence banks are exhausted. Please check your API credits."
+                    : "FGA is currently experiencing high latency. Please try again in a moment."
+            }, { status: 200 });
         }
 
         // 4. Create Stream Response
@@ -228,17 +429,19 @@ export async function POST(req: NextRequest) {
                 } finally {
                     controller.close();
 
-                    // 5. Save to MongoDB (After stream completes)
-                    if (session && fullReply.trim() && sessionId) {
+                    // 5. Save to MongoDB & Update Memory
+                    if (sessionUser && fullReply.trim() && sessionId) {
                         try {
                             await dbConnect();
-                            const userId = getUserId(session);
+                            const userId = getUserKey(sessionUser);
                             if (userId) {
                                 // Save Messages
                                 await ChatMessage.create([
                                     { userId, sessionId, role: 'user', content: lastUserMessage.content },
                                     { userId, sessionId, role: 'assistant', content: fullReply }
                                 ]);
+                                // Update Memory in background
+                                updateUserMemory(userId, lastUserMessage.content, fullReply, userMemoryStr);
                             }
                         } catch (dbErr) {
                             console.error("DB Save Error:", dbErr);
@@ -270,7 +473,7 @@ export async function DELETE(req: NextRequest) {
         if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
         await dbConnect();
-        const userId = getUserId(session);
+        const userId = getUserKey(session);
         if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
         const { searchParams } = new URL(req.url);

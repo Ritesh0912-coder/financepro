@@ -35,14 +35,18 @@ async function dbConnect() {
 
   if (!cached.promise) {
     const opts = {
-      bufferCommands: false,
+      bufferCommands: true,
+      connectTimeoutMS: 60000,
+      serverSelectionTimeoutMS: 60000,
+      socketTimeoutMS: 60000,
     };
 
     cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
+      console.log('MongoDB Connected Successfully (Resilient)');
       return mongoose.connection;
     });
   }
-  
+
   try {
     cached.conn = await cached.promise;
   } catch (e) {
