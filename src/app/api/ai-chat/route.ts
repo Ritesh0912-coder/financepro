@@ -233,6 +233,7 @@ export async function POST(req: NextRequest) {
 
         let aiResponse: Response | null = null;
         let finalStream: ReadableStream | null = null;
+        const debugLogs: string[] = [];
 
         // --- ATTEMPT 1: OpenRouter (Primary) ---
         if (openRouterKey) {
@@ -254,11 +255,15 @@ export async function POST(req: NextRequest) {
 
                 if (res.ok) {
                     aiResponse = res;
-                } else if (res.status === 402 || res.status === 429) {
-                    console.warn(`Primary OpenRouter failed (${res.status}), trying AIML...`);
+                } else {
+                    const msg = `Primary OpenRouter failed (${res.status})`;
+                    console.warn(`${msg}, trying AIML...`);
+                    debugLogs.push(msg);
                 }
-            } catch (err) {
-                console.error("OpenRouter Primary Attempt Failed:", err);
+            } catch (err: any) {
+                const msg = `OpenRouter Primary Attempt Failed: ${err?.message || err}`;
+                console.error(msg);
+                debugLogs.push(msg);
             }
         }
 
@@ -285,10 +290,14 @@ export async function POST(req: NextRequest) {
                 if (res.ok) {
                     aiResponse = res;
                 } else {
-                    console.warn(`AIML API failed (${res.status}), trying Gemini...`);
+                    const msg = `AIML API failed (${res.status})`;
+                    console.warn(`${msg}, trying Gemini...`);
+                    debugLogs.push(msg);
                 }
-            } catch (err) {
-                console.error("AIML Attempt Failed:", err);
+            } catch (err: any) {
+                const msg = `AIML Attempt Failed: ${err?.message || err}`;
+                console.error(msg);
+                debugLogs.push(msg);
             }
         }
 
@@ -335,8 +344,10 @@ export async function POST(req: NextRequest) {
                         finally { controller.close(); }
                     }
                 });
-            } catch (err) {
-                console.error("Gemini Fallback Failed:", err);
+            } catch (err: any) {
+                const msg = `Gemini Fallback Failed: ${err?.message || err}`;
+                console.error(msg);
+                debugLogs.push(msg);
             }
         }
 
@@ -357,7 +368,14 @@ export async function POST(req: NextRequest) {
                         stream: true,
                     })
                 });
-            } catch (err) { console.error("Final resort failed:", err); }
+                if (aiResponse && !aiResponse.ok) {
+                    debugLogs.push(`OpenRouter Cheap failed with status: ${aiResponse.status}`);
+                }
+            } catch (err: any) {
+                const msg = `Final resort failed: ${err?.message || err}`;
+                console.error(msg);
+                debugLogs.push(msg);
+            }
         }
 
         if (finalStream) {
@@ -367,6 +385,7 @@ export async function POST(req: NextRequest) {
         }
 
         if (!aiResponse || !aiResponse.ok) {
+            console.error("ALL AI PROVIDERS FAILED. Debug Logs:", JSON.stringify(debugLogs, null, 2));
             const finalStatus = aiResponse?.status || 500;
             return NextResponse.json({
                 reply: finalStatus === 402

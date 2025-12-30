@@ -15,7 +15,7 @@ export default function AboutPage() {
                     <section className="bg-[#1a1f2e] border border-slate-700/50 rounded-xl p-6">
                         <h2 className="text-2xl font-bold text-white mb-3">Our Mission</h2>
                         <p>
-                            We provide real-time financial intelligence, market analysis, and institutional activity tracking 
+                            We provide real-time financial intelligence, market analysis, and institutional activity tracking
                             to help investors make informed decisions in the dynamic world of finance.
                         </p>
                     </section>
@@ -24,7 +24,7 @@ export default function AboutPage() {
                         <h2 className="text-2xl font-bold text-white mb-3">What We Offer</h2>
                         <ul className="list-disc list-inside space-y-2">
                             <li>Real-time Market Mood Index (MMI) tracking</li>
-                            <li>FII & DII activity monitoring</li>
+                            <li>Ask FGA for elite market intelligence </li>
                             <li>Comprehensive financial news coverage</li>
                             <li>AI-powered market analysis</li>
                             <li>Live market data and indices</li>
