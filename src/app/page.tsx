@@ -30,8 +30,8 @@ export default function HomePage() {
           {/* News Feed (Centered) */}
           <div className="space-y-8">
             <div className="flex items-center gap-3 mb-6">
-              <div className="h-10 w-10 rounded-full bg-orange-500/10 flex items-center justify-center border border-orange-500/20">
-                <Newspaper className="h-5 w-5 text-orange-400" />
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+                <Newspaper className="h-5 w-5 text-primary" />
               </div>
               <h2 className="text-2xl font-bold text-white">Latest Market Intelligence</h2>
             </div>

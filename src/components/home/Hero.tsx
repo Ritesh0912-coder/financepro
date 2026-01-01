@@ -48,11 +48,11 @@ export function Hero() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="inline-flex items-center gap-2 rounded-full border border-orange-500/10 bg-black/20 px-4 py-1.5 text-sm text-orange-400 backdrop-blur-md pointer-events-auto"
+                    className="inline-flex items-center gap-2 rounded-full border border-primary/10 text-primary backdrop-blur-md pointer-events-auto"
                 >
                     <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                     </span>
                     Live Market Updates & Analysis
                 </motion.div>
@@ -65,7 +65,7 @@ export function Hero() {
                     className="space-y-4 pointer-events-auto"
                 >
                     <h1 className="text-6xl md:text-8xl font-bold tracking-tight text-white leading-tight drop-shadow-sm">
-                        Global Finance <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-600">IN</span>
+                        Global Finance <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-600">IN</span>
                     </h1>
                     <ShinyText
                         text="Master the Markets with Precision"
@@ -99,7 +99,7 @@ export function Hero() {
                     </Link>
                     <Link href="/ltp-calculator">
                         <Button size="lg" variant="outline" className="h-14 px-10 text-lg border-white/10 hover:bg-white/5 text-white backdrop-blur-md rounded-full transition-all duration-300">
-                            <Zap className="mr-2 h-5 w-5 text-orange-400" />
+                            <Zap className="mr-2 h-5 w-5 text-primary" />
                             LTP Tools
                         </Button>
                     </Link>

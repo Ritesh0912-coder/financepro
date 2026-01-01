@@ -132,6 +132,7 @@ export async function GET(req: NextRequest) {
 // POST: Process Message and Save
 export async function POST(req: NextRequest) {
     try {
+        console.log("[FGA API] POST request received");
         const openRouterKey = process.env.OPENROUTER_API_KEY;
         const googleApiKey = process.env.GOOGLE_API_KEY;
         const aimlApiKey = process.env.AIML_API_KEY;
@@ -143,11 +144,15 @@ export async function POST(req: NextRequest) {
             });
         }
 
+        console.log("[FGA API] Checking session...");
         const sessionUser = await getServerSession(authOptions);
+        console.log("[FGA API] Session checked:", sessionUser ? "Authenticated" : "Anonymous");
+
         const body = await req.json();
         const { messages } = body;
         let { sessionId } = body;
 
+        console.log("[FGA API] Processing message, sessionId:", sessionId);
         const lastUserMessage = messages[messages.length - 1];
 
         // 1. Fetch User Memory (Persistent Intelligence)

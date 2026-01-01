@@ -5,6 +5,7 @@ import GooeyNav from "@/components/ui/GooeyNav";
 import { TickerStrip } from "@/components/layout/TickerStrip";
 import { Footer } from "@/components/layout/Footer";
 import { NextAuthProvider } from "@/components/providers/NextAuthProvider";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -36,12 +37,14 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className={`${inter.variable} antialiased min-h-screen flex flex-col`}>
         <NextAuthProvider>
-          <TickerStrip />
-          <div className="relative z-50">
-            <GooeyNav items={navItems} />
-          </div>
-          <main className="flex-1">{children}</main>
-          <Footer />
+          <ThemeProvider>
+            <TickerStrip />
+            <div className="relative z-50">
+              <GooeyNav items={navItems} />
+            </div>
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </ThemeProvider>
         </NextAuthProvider>
       </body>
     </html>

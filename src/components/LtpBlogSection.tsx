@@ -38,7 +38,7 @@ export function LtpBlogSection() {
     return (
         <div className="py-16 space-y-8">
             <div className="text-center">
-                <Badge variant="outline" className="mb-4 border-orange-500/30 text-orange-400">
+                <Badge variant="outline" className="mb-4 border-primary/30 text-primary">
                     <BookOpen className="mr-1 h-3 w-3" />
                     Knowledge Hub
                 </Badge>
@@ -59,7 +59,7 @@ export function LtpBlogSection() {
                         viewport={{ once: true }}
                         transition={{ delay: idx * 0.1 }}
                     >
-                        <Card className="h-full bg-[#1a1f2e] border-slate-700/50 overflow-hidden hover:border-orange-500/50 transition-colors group flex flex-col">
+                        <Card className="h-full bg-[#1a1f2e] border-slate-700/50 overflow-hidden hover:border-primary/50 transition-colors group flex flex-col">
                             <div className="aspect-video w-full overflow-hidden relative bg-black/40 flex items-center justify-center">
                                 <img
                                     src={post.imageUrl}
@@ -69,7 +69,7 @@ export function LtpBlogSection() {
                                 <div className="absolute inset-0 bg-gradient-to-t from-[#1a1f2e] to-transparent opacity-60" />
                             </div>
                             <CardContent className="p-6 flex-1 flex flex-col">
-                                <h3 className="text-xl font-bold text-white mb-3 group-hover:text-orange-400 transition-colors line-clamp-2">
+                                <h3 className="text-xl font-bold text-white mb-3 group-hover:text-primary transition-colors line-clamp-2">
                                     {post.title}
                                 </h3>
                                 <p className="text-slate-400 text-sm leading-relaxed mb-4 flex-1 line-clamp-3">
@@ -77,7 +77,7 @@ export function LtpBlogSection() {
                                 </p>
                                 <Button
                                     variant="outline"
-                                    className="w-full border-slate-700 hover:bg-orange-500/10 hover:text-orange-400 hover:border-orange-500/50"
+                                    className="w-full border-slate-700 hover:bg-primary/10 hover:text-primary hover:border-primary/50"
                                     onClick={() => window.open(post.link, '_blank')}
                                 >
                                     Read Article <ExternalLink className="ml-2 h-4 w-4" />
@@ -91,7 +91,7 @@ export function LtpBlogSection() {
             <div className="text-center mt-8">
                 <Button
                     variant="ghost"
-                    className="text-orange-400 hover:text-orange-300"
+                    className="text-primary hover:text-primary-hover"
                     onClick={() => window.open('https://www.ltpcalculator.com/blogs', '_blank')}
                 >
                     View All Articles <ExternalLink className="ml-2 h-4 w-4" />

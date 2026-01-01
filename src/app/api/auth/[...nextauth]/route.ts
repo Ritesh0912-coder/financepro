@@ -3,6 +3,11 @@ import { authOptions } from "@/lib/auth-options"
 
 const handler = NextAuth(authOptions)
 
-export { handler as GET, handler as POST }
+const combinedHandler = async (req: Request, props: { params: Promise<{ nextauth: string[] }> }) => {
+    const params = await props.params;
+    return handler(req, { params });
+}
+
+export { combinedHandler as GET, combinedHandler as POST }
 export const dynamic = "force-dynamic"
 export const revalidate = 0

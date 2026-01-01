@@ -1,0 +1,8 @@
+src/components/ui/Hyperspeed.tsx(3,10): error TS2305: Module '"three"' has no exported member 'LineCurve3'.
+src/components/ui/Hyperspeed.tsx(3,22): error TS2305: Module '"three"' has no exported member 'ShaderChunk'.
+src/components/ui/Hyperspeed.tsx(827,13): error TS2339: Property 'ShaderChunk' does not exist on type 'typeof import("C:/Users/wedon/Desktop/finnew pro/node_modules/@types/three/build/three.module")'.
+src/components/ui/Hyperspeed.tsx(949,13): error TS2339: Property 'ShaderChunk' does not exist on type 'typeof import("C:/Users/wedon/Desktop/finnew pro/node_modules/@types/three/build/three.module")'.
+src/components/ui/Hyperspeed.tsx(1125,13): error TS2339: Property 'ShaderChunk' does not exist on type 'typeof import("C:/Users/wedon/Desktop/finnew pro/node_modules/@types/three/build/three.module")'.
+src/lib/mongodb.ts(12,28): error TS2709: Cannot use namespace 'MongoClient' as a type.
+src/lib/mongodb.ts(18,39): error TS2709: Cannot use namespace 'MongoClient' as a type.
+src/lib/mongodb.ts(25,68): error TS2709: Cannot use namespace 'MongoClient' as a type.

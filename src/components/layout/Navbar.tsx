@@ -23,7 +23,8 @@ import { NavbarMenu } from "@/components/ui/navbar-menu";
 const navItems = [
     { href: '/', label: 'Home', icon: Home },
     { href: '/news', label: 'News', icon: Newspaper },
-    { href: '/ltp-calculator', label: 'LTP Calculator', icon: Calculator },
+    { href: '/market/mmi', label: 'MMI', icon: BarChart3 },
+    { href: '/ltp-calculator', label: 'LTP', icon: Calculator },
 ];
 
 export function Navbar() {

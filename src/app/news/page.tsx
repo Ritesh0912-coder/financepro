@@ -42,8 +42,8 @@ export default function NewsPage() {
 
             <div className="relative pt-32 pb-12 px-4 max-w-7xl mx-auto">
                 <div className="flex items-center gap-4 mb-8">
-                    <div className="h-12 w-12 rounded-full bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
-                        <Newspaper className="h-6 w-6 text-indigo-400" />
+                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+                        <Newspaper className="h-6 w-6 text-primary" />
                     </div>
                     <div>
                         <h1 className="text-4xl font-bold text-white mb-2">Global Financial News</h1>

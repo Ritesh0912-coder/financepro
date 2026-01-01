@@ -7,6 +7,7 @@ export interface IUser extends Document {
     name: string;
     role: 'admin' | 'editor' | 'viewer';
     isActive: boolean;
+    themeColor?: string;
     lastLogin?: Date;
     createdAt: Date;
     updatedAt: Date;
@@ -20,6 +21,7 @@ const UserSchema = new Schema<IUser>(
         name: { type: String, required: true },
         role: { type: String, enum: ['admin', 'editor', 'viewer'], default: 'viewer' },
         isActive: { type: Boolean, default: true },
+        themeColor: { type: String, default: '#f97316' }, // Default orange-500
         lastLogin: { type: Date },
     },
     { timestamps: true }

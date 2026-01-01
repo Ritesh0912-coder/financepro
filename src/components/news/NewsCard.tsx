@@ -44,7 +44,7 @@ export function NewsCard({
                     className={cn(
                         'card-hover h-full overflow-hidden group cursor-pointer',
                         isBreaking && 'border-red-500/50',
-                        isFeatured && 'border-orange-500/50'
+                        isFeatured && 'border-primary/50'
                     )}
                 >
                     {/* Image */}
@@ -71,7 +71,7 @@ export function NewsCard({
 
                     <CardHeader className={cn(!imageUrl && 'pt-6')}>
                         <div className="flex items-center gap-2 mb-2">
-                            <Badge variant="info">{category}</Badge>
+                            <Badge variant="primary">{category}</Badge>
                             {isFeatured && (
                                 <Badge variant="warning">
                                     <Sparkles className="h-3 w-3 mr-1" />
@@ -79,7 +79,7 @@ export function NewsCard({
                                 </Badge>
                             )}
                         </div>
-                        <h3 className="text-lg font-semibold text-white line-clamp-2 group-hover:text-orange-400 transition-colors">
+                        <h3 className="text-lg font-semibold text-white line-clamp-2 group-hover:text-primary transition-colors">
                             {title}
                         </h3>
                     </CardHeader>

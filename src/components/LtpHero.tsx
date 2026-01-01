@@ -11,7 +11,7 @@ export function LtpHero() {
         <div className="relative overflow-hidden py-20 lg:py-28">
             {/* Background Effects */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full pointer-events-none">
-                <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-orange-500/10 rounded-full blur-3xl animate-pulse" />
+                <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary/10 rounded-full blur-3xl animate-pulse" />
                 <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
             </div>
 
@@ -23,13 +23,13 @@ export function LtpHero() {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.8 }}
                     >
-                        <Badge variant="outline" className="mb-6 border-orange-500/50 text-orange-400 px-4 py-1 text-sm">
+                        <Badge variant="outline" className="mb-6 border-primary/50 text-primary px-4 py-1 text-sm">
                             <TrendingUp className="w-4 h-4 mr-2" />
                             Revolutionizing Option Trading
                         </Badge>
                         <h1 className="text-5xl lg:text-7xl font-bold mb-6 leading-tight text-white">
                             Master the Markets <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500">
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-orange-600">
                                 with LTP Calculator
                             </span>
                         </h1>
@@ -40,19 +40,19 @@ export function LtpHero() {
                         <div className="flex flex-wrap gap-4">
                             <Button
                                 size="lg"
-                                className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white border-0 shadow-lg shadow-orange-500/25 h-14 px-8 text-lg rounded-full"
+                                className="bg-gradient-to-r from-primary to-orange-600 hover:from-primary-hover hover:to-orange-700 text-white border-0 shadow-lg shadow-primary/25 h-14 px-8 text-lg rounded-full"
                                 onClick={() => window.open('https://nseoptionchain.ltpcalculator.com/', '_blank')}
                             >
                                 Start Calculating Now <ArrowRight className="ml-2 w-5 h-5" />
                             </Button>
                             <Button size="lg" variant="outline" className="border-slate-700 hover:bg-slate-800 text-white h-14 px-8 text-lg rounded-full">
-                                <PlayCircle className="mr-2 w-5 h-5 text-orange-400" /> Watch Demo
+                                <PlayCircle className="mr-2 w-5 h-5 text-primary" /> Watch Demo
                             </Button>
                         </div>
 
                         <div className="mt-12 flex items-center gap-6 text-slate-400">
                             <div className="flex items-center gap-2">
-                                <Users className="w-5 h-5 text-orange-400" />
+                                <Users className="w-5 h-5 text-primary" />
                                 <span className="font-semibold text-white">50k+</span> Community
                             </div>
                             <div className="w-px h-6 bg-slate-700" />
@@ -71,7 +71,7 @@ export function LtpHero() {
                         className="relative"
                     >
                         {/* Increased height and optimized contain/cover for the person image */}
-                        <div className="relative z-10 rounded-3xl overflow-hidden border-2 border-white/10 shadow-2xl shadow-orange-900/20 glass min-h-[600px] flex items-end justify-center group">
+                        <div className="relative z-10 rounded-3xl overflow-hidden border-2 border-white/10 shadow-2xl shadow-primary/20 glass min-h-[600px] flex items-end justify-center group">
                             {/* Dr. Vinay Image - Using local asset */}
                             <img
                                 src="/images/dr-vinay-nobg.png"
@@ -87,14 +87,14 @@ export function LtpHero() {
                                     </div>
                                     <div>
                                         <h3 className="text-white font-bold text-lg">Dr. Vinay Prakash Tiwari</h3>
-                                        <p className="text-orange-400 text-sm font-medium">Founder, LTP Calculator</p>
+                                        <p className="text-primary text-sm font-medium">Founder, LTP Calculator</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         {/* Decor elements - Animated */}
-                        <div className="absolute -top-10 -right-10 w-40 h-40 bg-orange-500 rounded-full mix-blend-multiply filter blur-[64px] opacity-60 animate-blob" />
+                        <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary rounded-full mix-blend-multiply filter blur-[64px] opacity-60 animate-blob" />
                         <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-purple-500 rounded-full mix-blend-multiply filter blur-[64px] opacity-60 animate-blob animation-delay-2000" />
                     </motion.div>
                 </div>

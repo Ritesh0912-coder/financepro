@@ -10,8 +10,12 @@
   /* Slightly lighter shade for cards */
   --card-foreground: #ffffff;
 
-  --primary: #f97316;
-  /* Orange-500 */
+  --primary-theme: #f97316;
+  --primary: var(--primary-theme);
+  --primary-hover: color-mix(in srgb, var(--primary-theme), white 15%);
+  --primary-muted: color-mix(in srgb, var(--primary-theme), transparent 80%);
+  --primary-glow: color-mix(in srgb, var(--primary-theme), transparent 40%);
+  /* Orange-500 fallback */
   --primary-foreground: #ffffff;
 
   --secondary: #252a3b;
@@ -34,8 +38,10 @@
   /* Cosmic/Nebula Theme - Custom Palette for MindSpark Redesign */
   --cosmic-nebula: #090b11;
   --cosmic-glow: rgba(0, 180, 216, 0.4);
-  --cosmic-accent: #00e5ff; /* Vivid Cyan */
-  --cosmic-purple: #7000ff; /* Deep Purple */
+  --cosmic-accent: #00e5ff;
+  /* Vivid Cyan */
+  --cosmic-purple: #7000ff;
+  /* Deep Purple */
   --cosmic-glass: rgba(255, 255, 255, 0.03);
   --cosmic-border: rgba(255, 255, 255, 0.08);
 }
@@ -43,6 +49,10 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-muted: var(--primary-muted);
+  --color-primary-glow: var(--primary-glow);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }

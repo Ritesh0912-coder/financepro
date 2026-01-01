@@ -679,7 +679,7 @@ class CarLights {
 
     init() {
         const options = this.options;
-        const curve = new THREE.LineCurve3(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1));
+        const curve = new (THREE as any)['LineCurve3'](new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1));
         const geometry = new THREE.TubeGeometry(curve, 40, 1, 8, false);
 
         const instanced = new THREE.InstancedBufferGeometry().copy(geometry as any) as THREE.InstancedBufferGeometry;
@@ -780,7 +780,7 @@ class CarLights {
 
 const carLightsFragment = `
   #define USE_FOG;
-  ${THREE.ShaderChunk['fog_pars_fragment']}
+  ${(THREE as any)['ShaderChunk']['fog_pars_fragment']}
   varying vec3 vColor;
   varying vec2 vUv; 
   uniform vec2 uFade;
@@ -789,13 +789,13 @@ const carLightsFragment = `
     float alpha = smoothstep(uFade.x, uFade.y, vUv.x);
     gl_FragColor = vec4(color, alpha);
     if (gl_FragColor.a < 0.0001) discard;
-    ${THREE.ShaderChunk['fog_fragment']}
+    ${(THREE as any)['ShaderChunk']['fog_fragment']}
   }
 `;
 
 const carLightsVertex = `
   #define USE_FOG;
-  ${THREE.ShaderChunk['fog_pars_vertex']}
+  ${(THREE as any)['ShaderChunk']['fog_pars_vertex']}
   attribute vec3 aOffset;
   attribute vec3 aMetrics;
   attribute vec3 aColor;
@@ -910,7 +910,7 @@ class LightsSticks {
 
 const sideSticksVertex = `
   #define USE_FOG;
-  ${THREE.ShaderChunk['fog_pars_vertex']}
+  ${(THREE as any)['ShaderChunk']['fog_pars_vertex']}
   attribute float aOffset;
   attribute vec3 aColor;
   attribute vec2 aMetrics;
@@ -951,12 +951,12 @@ const sideSticksVertex = `
 
 const sideSticksFragment = `
   #define USE_FOG;
-  ${THREE.ShaderChunk['fog_pars_fragment']}
+  ${(THREE as any)['ShaderChunk']['fog_pars_fragment']}
   varying vec3 vColor;
   void main(){
     vec3 color = vec3(vColor);
     gl_FragColor = vec4(color,1.);
-    ${THREE.ShaderChunk['fog_fragment']}
+    ${(THREE as any)['ShaderChunk']['fog_fragment']}
   }
 `;
 
@@ -1057,13 +1057,13 @@ const roadBaseFragment = `
   uniform vec3 uColor;
   uniform float uTime;
   #include <roadMarkings_vars>
-  ${THREE.ShaderChunk['fog_pars_fragment']}
+  ${(THREE as any)['ShaderChunk']['fog_pars_fragment']}
   void main() {
     vec2 uv = vUv;
     vec3 color = vec3(uColor);
     #include <roadMarkings_fragment>
     gl_FragColor = vec4(color, 1.);
-    ${THREE.ShaderChunk['fog_fragment']}
+    ${(THREE as any)['ShaderChunk']['fog_fragment']}
   }
 `;
 
@@ -1107,7 +1107,7 @@ const roadFragment = roadBaseFragment
 const roadVertex = `
   #define USE_FOG;
   uniform float uTime;
-  ${THREE.ShaderChunk['fog_pars_vertex']}
+  ${(THREE as any)['ShaderChunk']['fog_pars_vertex']}
   uniform float uTravelLength;
   varying vec2 vUv; 
   #include <getDistortion_vertex>

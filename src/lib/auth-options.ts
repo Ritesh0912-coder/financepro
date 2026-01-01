@@ -1,7 +1,8 @@
-import { NextAuthOptions } from "next-auth"
+
+import { NextAuthOptions, Session } from "next-auth"
 import { Adapter } from "next-auth/adapters"
 import CredentialsProvider from "next-auth/providers/credentials"
-import EmailProvider from "next-auth/providers/email"
+// import EmailProvider from "next-auth/providers/email" // TODO: Temporarily disabled due to server configuration error (likely nodemailer dependency issue)
 import GoogleProvider from "next-auth/providers/google"
 import { MongoDBAdapter } from "@auth/mongodb-adapter"
 import clientPromise from "@/lib/mongodb"
@@ -10,12 +11,14 @@ import { User } from "@/models/User"
 import { sendVerificationRequest } from "@/lib/auth-send-request"
 
 export const authOptions: NextAuthOptions = {
-    adapter: MongoDBAdapter(clientPromise) as Adapter,
+    // adapter: MongoDBAdapter(clientPromise) as Adapter,
     providers: [
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID || "",
             clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
         }),
+        /*
+        // TEMPORARILY DISABLED: Causes server configuration error (likely nodemailer dependency issue)
         EmailProvider({
             server: {
                 host: process.env.EMAIL_SERVER_HOST,
@@ -26,8 +29,9 @@ export const authOptions: NextAuthOptions = {
                 }
             },
             from: process.env.EMAIL_FROM,
-            sendVerificationRequest,
+            // sendVerificationRequest,
         }),
+        */
         CredentialsProvider({
             name: "Credentials",
             credentials: {
@@ -58,6 +62,7 @@ export const authOptions: NextAuthOptions = {
                     name: user.name,
                     email: user.email,
                     role: user.role,
+                    themeColor: user.themeColor,
                 };
             }
         })
@@ -66,10 +71,15 @@ export const authOptions: NextAuthOptions = {
         strategy: "jwt",
     },
     callbacks: {
-        async jwt({ token, user }) {
+        async jwt({ token, user, trigger, session }: { token: any, user?: any, trigger?: string, session?: any }) {
             if (user) {
                 token.role = user.role;
                 token.id = user.id;
+                token.themeColor = (user as any).themeColor;
+            }
+
+            if (trigger === "update" && session?.themeColor) {
+                token.themeColor = session.themeColor;
             }
 
             // Enforce Admin Role for specific email
@@ -79,10 +89,11 @@ export const authOptions: NextAuthOptions = {
 
             return token;
         },
-        async session({ session, token }) {
+        async session({ session, token }: { session: any; token: any }) {
             if (session.user) {
                 (session.user as any).role = token.role;
                 (session.user as any).id = token.id;
+                (session.user as any).themeColor = token.themeColor;
             }
             return session;
         }
@@ -90,6 +101,8 @@ export const authOptions: NextAuthOptions = {
     pages: {
         signIn: '/auth/login',
     },
-    debug: true, // Enable debugging to trace EmailSignin errors
+    events: {
+    },
+    debug: true,
     secret: process.env.NEXTAUTH_SECRET,
 }
