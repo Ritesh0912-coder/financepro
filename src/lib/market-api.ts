@@ -35,3 +35,24 @@ export async function fetchMultipleMarketData(symbols: string[]) {
 }
 
 
+export async function fetchMMI() {
+    try {
+        const response = await fetch('https://api.tickertape.in/mmi/now', {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/json',
+                'Referer': 'https://www.tickertape.in/'
+            },
+            next: { revalidate: 3600 } // Cache for 1 hour
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            return data.data; // Tickertape returns { success: true, data: { ... } }
+        }
+        return null;
+    } catch (error) {
+        console.error('Error fetching MMI:', error);
+        return null;
+    }
+}

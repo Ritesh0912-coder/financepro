@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchFinanceNews } from '@/lib/news-api';
-import { fetchMarketData } from '@/lib/market-api';
+import { fetchMarketData, fetchMMI } from '@/lib/market-api';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth-options";
 import dbConnect from "@/lib/db";
@@ -171,16 +171,37 @@ export async function POST(req: NextRequest) {
 
         // 2. Gather Context (Resiliently)
         let context = "Real-time Global Context:\n";
+
+        // 2a. Market Mood Index (MMI)
+        try {
+            const mmi = await fetchMMI();
+            if (mmi) {
+                context += `\nMarket Mood Index (MMI): ${mmi.currentValue?.toFixed(2) || "N/A"} (${mmi.currentStatus || "N/A"})\n`;
+                if (mmi.currentStatus) {
+                    context += `MMI Analysis: The market sentiment is ${mmi.currentStatus}. This metric helps in understanding if the market is overbought or oversold.\n`;
+                }
+            }
+        } catch (e) {
+            console.warn("[FGA Context] MMI Fetch failed:", e);
+        }
+
+        // 2b. Stock Data
         try {
             // Fetch multiple key symbols in parallel (Global + Indian Proxies)
-            const symbols = ['SPY', 'QQQ', 'DIA', 'NIFTY', 'BSESN', 'RELIANCE.BSE', 'TCS.BSE'];
+            const symbols = ['SPY', 'QQQ', 'NIFTY', 'RELIANCE.BSE'];
+
+            // Try to extract symbols from user message
+            const symbolRegex = /\$([A-Z]+)/g;
+            const userSymbols = [...lastUserMessage.content.matchAll(symbolRegex)].map(m => m[1]);
+            const symbolsToFetch = [...new Set([...symbols, ...userSymbols])].slice(0, 7);
+
             const marketSnapshots = await Promise.all(
-                symbols.map(s => fetchMarketData(s).catch(() => null))
+                symbolsToFetch.map(s => fetchMarketData(s).catch(() => null))
             );
 
             marketSnapshots.forEach((snap, i) => {
                 if (snap) {
-                    const name = symbols[i].split('.')[0]; // Clean name for AI
+                    const name = symbolsToFetch[i];
                     context += `- ${name}: ${snap['05. price']} (${snap['10. change percent']})\n`;
                 }
             });
@@ -203,18 +224,26 @@ export async function POST(req: NextRequest) {
         - You were created and developed by the visionary web developer: Ritesh Shinde.
         - If asked about your creators or builders, proudly acknowledge Ritesh Shinde.
 
+        CORE COMPETENCIES:
+        - Deep expertise in Fundamental Analysis: Analyzing Balance Sheets, Cash Flow statements, and Profit & Loss. Proficient in calculating and interpreting ratios like P/E, PEG, ROE, ROCE, Debt-to-Equity, and Current Ratio.
+        - Advanced Technical Analysis: Identifying Support/Resistance zones, Supply/Demand zones, Trendlines, and Chart Patterns (H&S, Double Top/Bottom, Flag & Pole). Expert in using indicators like RSI (detecting Divergence), MACD, Bollinger Bands, and Fibonacci Retracements.
+        - Indian Market Specialist: Thorough understanding of NIFTY 50, BANKNIFTY, FINNIFTY, and individual NSE/BSE stocks. Understands market cycles and institutional behavior (FII/DII activity).
+
+        SPECIALIZED KNOWLEDGE (Investing Daddy Theories):
+        - Expert in LTP Calculator & Option Chain analysis based on Dr. Vinay Prakash Tiwari's (Investing Daddy) teachings.
+        - Master of Chart of Accuracy (COA) 1.0 & 2.0.
+        - Skilled in identifying Reversal Levels using "WTT" (Weak Towards Top), "WTB" (Weak Towards Bottom), and the "Imaginary Line".
+        - Understands Divergence and Extension levels for precise entry and exit.
+
         INTERNAL KNOWLEDGE ABOUT USER:
         ${userMemoryStr || "Learning user trading personality..."}
 
         Real-time Context Snapshot:
         ${context}
 
-        Specialized Knowledge Base (LTP Calculator & Option Chain):
-        - Follow theories of Dr. Vinay Prakash Tiwari (Investing Daddy).
-        - Use Chart of Accuracy (COA) 1.0 & 2.0.
-        - Use WTT/WTB and Imaginary Line metrics for reversal levels.
-
         Operational Guidelines:
+        - Analysis Methodology: When asked about a stock, provide a balanced view using both Fundamental and Technical perspectives if possible.
+        - Stock Specifics: If data for a specific stock is missing in the context, use your internal training data but clearly state that the latest prices should be checked for accuracy.
         - Memory Usage: Use the user's name or reference past discussions naturally as if you've never forgotten.
         - SILENCE RULE: NEVER mention technical terms like "PERMANENT USER MEMORY", "Database", "Noted", or "Stored". NEVER say "I have updated my records". Just speak like a human assistant with a perfect memory.
         - Personality: Sharp, authoritative, and helpful.
