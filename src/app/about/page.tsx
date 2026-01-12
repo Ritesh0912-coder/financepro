@@ -65,17 +65,16 @@ export default function AboutPage() {
                         >
                             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-semibold uppercase tracking-widest mb-6">
                                 <Zap className="w-3 h-3" />
-                                Redefining Financial Intelligence
+                                Professional Market Intelligence
                             </div>
                             <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
-                                Elevating Every <br />
+                                Precision Journalism <br />
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-white to-orange-400">
-                                    Financial Decision
+                                    For The Modern Investor
                                 </span>
                             </h1>
                             <p className="text-lg md:text-xl text-slate-400 max-w-3xl mx-auto leading-relaxed mb-10">
-                                Global Finance IN is not just a portal; it&apos;s a high-precision intelligence engine.
-                                We synthesize cosmic scales of market data into actionable, elite insights for the modern investor.
+                                Global Finance News is a high-precision intelligence platform designed to bridge the gap between global macroeconomic shifts and local market opportunities. We provide rigorous, data-driven analysis for those who demand clarity in a world of noise.
                             </p>
                         </motion.div>
 
@@ -110,8 +109,8 @@ export default function AboutPage() {
                             transition={{ duration: 0.8 }}
                         >
                             <h2 className="text-3xl md:text-4xl font-bold mb-8">
-                                Built on a Foundation of <br />
-                                <span className="text-orange-500">Unyielding Precision</span>
+                                Global Reach, <br />
+                                <span className="text-orange-500">Indian Roots</span>
                             </h2>
                             <div className="space-y-8">
                                 <div className="flex gap-4">
@@ -121,7 +120,7 @@ export default function AboutPage() {
                                     <div>
                                         <h3 className="text-xl font-bold mb-2">Our Mission</h3>
                                         <p className="text-slate-400 leading-relaxed">
-                                            To democratize elite-level financial intelligence. We believe every investor deserves access to the tools and data typically reserved for institutional sharks.
+                                            To democratize elite financial intelligence. We believe every investor deserves access to the tools and data typically reserved for institutional sharks, bridging the gap between Wall Street and Dalal Street.
                                         </p>
                                     </div>
                                 </div>
@@ -132,7 +131,18 @@ export default function AboutPage() {
                                     <div>
                                         <h3 className="text-xl font-bold mb-2">Our Vision</h3>
                                         <p className="text-slate-400 leading-relaxed">
-                                            To become the world&apos;s primary neural network for financial decision-making, where AI and human expertise converge to create wealth.
+                                            To become the world&apos;s primary neural network for financial decision-making, where AI-assisted data and human editorial expertise converge to create wealth and digital sovereignty.
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-4">
+                                    <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center border border-green-500/30">
+                                        <Award className="w-6 h-6 text-green-500" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold mb-2">The Pursuit of Synthesis</h3>
+                                        <p className="text-slate-400 leading-relaxed">
+                                            We connect the dots between diverse sectors—showing how a policy shift in Washington or Brussels ripples through the manufacturing hubs of Gujarat and the tech corridors of Bangalore.
                                         </p>
                                     </div>
                                 </div>

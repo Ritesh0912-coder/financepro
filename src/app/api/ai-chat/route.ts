@@ -218,35 +218,36 @@ export async function POST(req: NextRequest) {
         } catch (e) { }
 
         // 3. System Prompt (Silent persistent intelligence)
-        const systemPrompt = `You are "FGA" (Finance Global Assistant), the premier AI Financial Intelligence expert for "Global Finance IN".
+        const systemPrompt = `You are "FGA" (Finance Global Assistant), the premier AI Financial Intelligence expert for "Global Finance News".
         
-        IDENTITY & ORIGIN:
-        - You were created and developed by the visionary web developer: Ritesh Shinde.
-        - If asked about your creators or builders, proudly acknowledge Ritesh Shinde.
+        IDENTITY & ROLE:
+        - You analyze any finance-related query deeply, identifying intent (news explanation, market movement, or concept).
+        - You use context from Global Finance News articles, latest market data, and general finance knowledge.
+        - Your job is to explain complex news in simple terms, providing background context and explaining why it matters for both India and the global economy.
 
-        CORE COMPETENCIES:
-        - Deep expertise in Fundamental Analysis: Analyzing Balance Sheets, Cash Flow statements, and Profit & Loss. Proficient in calculating and interpreting ratios like P/E, PEG, ROE, ROCE, Debt-to-Equity, and Current Ratio.
-        - Advanced Technical Analysis: Identifying Support/Resistance zones, Supply/Demand zones, Trendlines, and Chart Patterns (H&S, Double Top/Bottom, Flag & Pole). Expert in using indicators like RSI (detecting Divergence), MACD, Bollinger Bands, and Fibonacci Retracements.
-        - Indian Market Specialist: Thorough understanding of NIFTY 50, BANKNIFTY, FINNIFTY, and individual NSE/BSE stocks. Understands market cycles and institutional behavior (FII/DII activity).
+        RULES OF ENGAGEMENT:
+        - ALWAYS explain in your own words. NEVER copy news text or external content directly.
+        - Be clear, logical, and user-satisfying.
+        - Tone: Helpful, Professional, and Easy to understand (beginner-friendly).
+        - STRICT PROHIBITION: Do NOT give buy/sell or investment advice. Avoid guarantees or strong predictions.
+        - Mandatory Closing: Every response must naturally transition to or include the phrase: "This explanation is for informational purposes only."
 
-        SPECIALIZED KNOWLEDGE (Investing Daddy Theories):
-        - Expert in LTP Calculator & Option Chain analysis based on Dr. Vinay Prakash Tiwari's (Investing Daddy) teachings.
-        - Master of Chart of Accuracy (COA) 1.0 & 2.0.
-        - Skilled in identifying Reversal Levels using "WTT" (Weak Towards Top), "WTB" (Weak Towards Bottom), and the "Imaginary Line".
-        - Understands Divergence and Extension levels for precise entry and exit.
-
-        INTERNAL KNOWLEDGE ABOUT USER:
-        ${userMemoryStr || "Learning user trading personality..."}
-
-        Real-time Context Snapshot:
+        INTERNAL KNOWLEDGE & CONTEXT:
+        - Developer Bio: Created by Ritesh Shinde.
+        - User Identity: ${sessionUser?.user?.name || sessionUser?.user?.email || "Valued User"}
+        - User Context: ${userMemoryStr || "Learning user trading personality..."}
+        
+        PERSONALIZATION RULE:
+        - Always address the user by their name or email (as provided in User Identity) in the greeting.
+        - Example: "Hello [Name/Email], I'm here to help..."
         ${context}
 
-        Operational Guidelines:
-        - Analysis Methodology: When asked about a stock, provide a balanced view using both Fundamental and Technical perspectives if possible.
-        - Stock Specifics: If data for a specific stock is missing in the context, use your internal training data but clearly state that the latest prices should be checked for accuracy.
-        - Memory Usage: Use the user's name or reference past discussions naturally as if you've never forgotten.
-        - SILENCE RULE: NEVER mention technical terms like "PERMANENT USER MEMORY", "Database", "Noted", or "Stored". NEVER say "I have updated my records". Just speak like a human assistant with a perfect memory.
-        - Personality: Sharp, authoritative, and helpful.
+        RESPONSE STRUCTURE:
+        1. Direct answer to the question.
+        2. Simple explanation (no unnecessary jargon).
+        3. Background or cause of the event/concept.
+        4. Impact or meaning for the user (India + Global).
+        5. Clear conclusion.
         `;
 
         // 4. Ensure Session Exists Upfront
@@ -360,7 +361,12 @@ export async function POST(req: NextRequest) {
                             for await (const chunk of result.stream) {
                                 const chunkText = chunk.text();
                                 fullText += chunkText;
-                                controller.enqueue(encoder.encode(chunkText));
+                                try {
+                                    controller.enqueue(encoder.encode(chunkText));
+                                } catch (e) {
+                                    console.warn("Gemini stream closed by client");
+                                    break;
+                                }
                             }
                             if (sessionUser && fullText.trim() && sessionId) {
                                 await dbConnect();
@@ -375,7 +381,9 @@ export async function POST(req: NextRequest) {
                                 }
                             }
                         } catch (err) { console.error("Gemini stream err:", err); }
-                        finally { controller.close(); }
+                        finally {
+                            try { controller.close(); } catch (e) { }
+                        }
                     }
                 });
             } catch (err: any) {
@@ -467,11 +475,17 @@ export async function POST(req: NextRequest) {
                                     const content = json.choices[0]?.delta?.content || "";
                                     if (content) {
                                         fullReply += content;
-                                        controller.enqueue(encoder.encode(content));
+                                        try {
+                                            controller.enqueue(encoder.encode(content));
+                                        } catch (e: any) {
+                                            if (e.code === 'ERR_INVALID_STATE') {
+                                                console.warn("[FGA API] Stream closed by client. Stopping...");
+                                                return; // Exit the start function entirely
+                                            }
+                                            throw e;
+                                        }
                                     }
                                 } catch (e) {
-                                    // If parse fails, it might be a weird chunk or non-json. 
-                                    // Since we buffer, this should be rare for valid lines.
                                     console.error("Error parsing stream line:", e);
                                 }
                             }
@@ -480,7 +494,7 @@ export async function POST(req: NextRequest) {
                 } catch (err) {
                     console.error("Streaming error", err);
                 } finally {
-                    controller.close();
+                    try { controller.close(); } catch (e) { }
 
                     // 5. Save to MongoDB & Update Memory
                     if (sessionUser && fullReply.trim() && sessionId) {
